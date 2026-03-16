@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my-modern-web
+
+A production-ready, high-performance web foundation built with the best modern tools available.
+
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| **Next.js 16** (App Router) | Framework with React Server Components |
+| **Bun** | Runtime & package manager |
+| **TypeScript** (strict) | Type safety |
+| **Tailwind CSS v4** | Styling, dark mode default |
+| **Shadcn/UI** (Radix UI) | Atomic UI components |
+| **Lucide Icons** | Icon library |
+| **Drizzle ORM** | Edge-compatible ORM |
+| **PostgreSQL** | Database |
+| **Zod** | Schema validation |
+| **next-themes** | Dark/Light theme switching |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/
+│   │   ├── sign-in/page.tsx
+│   │   └── sign-up/page.tsx
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── ui/
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   └── input.tsx
+│   ├── footer.tsx
+│   ├── hero-section.tsx
+│   ├── navbar.tsx
+│   ├── providers.tsx
+│   └── theme-switcher.tsx
+├── hooks/
+│   ├── use-local-storage.ts
+│   └── use-theme.ts
+└── lib/
+    ├── db/
+    │   ├── index.ts
+    │   └── schema.ts
+    ├── validations/
+    │   └── auth.ts
+    └── utils.ts
+```
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone and install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+git clone https://github.com/NileshSankhla/my-modern-web.git
+cd my-modern-web
+bun install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your values
+```
+
+### 3. Start the local database
+
+```bash
+docker compose up -d
+```
+
+### 4. Run database migrations
+
+```bash
+bun run db:push
+```
+
+### 5. Start the development server
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses [Drizzle ORM](https://orm.drizzle.team/) with PostgreSQL.
 
-## Learn More
+```bash
+# Push schema to database
+bun run db:push
 
-To learn more about Next.js, take a look at the following resources:
+# Open Drizzle Studio (visual database browser)
+bun run db:studio
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys to Vercel on push to `main`.
 
-## Deploy on Vercel
+### Required GitHub Secrets
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Secret | Description |
+|---|---|
+| `VERCEL_TOKEN` | Vercel API token |
+| `VERCEL_ORG_ID` | Vercel organization ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+[MIT](LICENSE)
