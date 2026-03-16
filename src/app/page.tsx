@@ -71,6 +71,74 @@ const Page = () => (
         </div>
       </div>
     </section>
+
+    <section id="about" className="border-t border-border/40 py-20">
+      <div className="container mx-auto px-4">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Built for Real Products
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            This starter combines a polished frontend with strict typing,
+            validation, and database scaffolding so you can focus on business
+            logic instead of setup.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" className="border-t border-border/40 py-20">
+      <div className="container mx-auto px-4">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Simple Pricing
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Start free and scale only when your product grows.
+          </p>
+        </div>
+
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Starter</CardTitle>
+              <CardDescription>For early-stage projects.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">$0</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Includes auth scaffolding, theming, and database schema.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pro</CardTitle>
+              <CardDescription>For production applications.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">$29</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Adds analytics, advanced auth providers, and team workflows.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" className="border-t border-border/40 py-20">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Contact
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          Questions about implementation, deployment, or customization?
+          Reach us at hello@my-modern-web.dev.
+        </p>
+      </div>
+    </section>
   </>
 );
 

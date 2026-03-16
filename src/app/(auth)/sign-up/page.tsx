@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import SignUpForm from "@/components/auth/sign-up-form";
 import {
   Card,
   CardContent,
@@ -26,68 +25,7 @@ const SignUpPage = () => (
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium leading-none">
-              Full Name
-            </label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Jane Doe"
-              autoComplete="name"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium leading-none"
-            >
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium leading-none"
-            >
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Min. 8 characters"
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label
-              htmlFor="confirm-password"
-              className="text-sm font-medium leading-none"
-            >
-              Confirm Password
-            </label>
-            <Input
-              id="confirm-password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full">
-            Create Account
-          </Button>
-        </form>
+        <SignUpForm />
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
         Already have an account?&nbsp;
