@@ -52,12 +52,6 @@ src/
 
 ## Getting Started
 
-### Prerequisites
-
-- Bun (latest)
-- Node.js 24+
-- npm 11+
-
 ### 1. Clone and install dependencies
 
 ```bash
