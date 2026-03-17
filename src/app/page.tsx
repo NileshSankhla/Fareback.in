@@ -38,7 +38,13 @@ const features = [
 ];
 
 const Page = async () => {
-  const merchantList = await db.select().from(merchants);
+  let merchantList: (typeof merchants.$inferSelect)[] = [];
+
+  try {
+    merchantList = await db.select().from(merchants);
+  } catch (error) {
+    console.error("Failed to fetch merchants:", error);
+  }
 
   return (
     <>

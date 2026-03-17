@@ -25,8 +25,10 @@ export const useLocalStorage = <T>(
       if (typeof window !== "undefined") {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
-    } catch {
-      console.error(`Error setting localStorage key "${key}"`);
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(`Error setting localStorage key "${key}":`, error);
+      }
     }
   };
 
