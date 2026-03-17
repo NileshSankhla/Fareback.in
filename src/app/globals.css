@@ -73,6 +73,11 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Hide Next.js development indicator / Dev Tools panel in all versions */
+nextjs-portal {
+  display: none !important;
+}
+
 * {
   border-color: hsl(var(--border));
 }
