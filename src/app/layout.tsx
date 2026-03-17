@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: {
@@ -44,6 +45,7 @@ const RootLayout = ({
           <Footer />
         </div>
       </Providers>
+      <Analytics />
     </body>
   </html>
 );
