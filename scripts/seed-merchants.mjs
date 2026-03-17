@@ -9,26 +9,60 @@ if (!databaseUrl) {
 
 const sql = postgres(databaseUrl, { prepare: false });
 
+// NOTE: Replace the baseUrl values with your actual affiliate tracking URLs.
+// For example:
+//   Amazon Associates: https://www.amazon.in?tag=YOUR_TAG-21
+//   Flipkart Affiliate: https://www.flipkart.com?affid=YOUR_AFFID&affExtParam1=YOUR_PARAM
+//   Myntra: https://www.myntra.com/?utm_source=affiliate&utm_medium=affiliate_id
+// The system appends ?subid=<click_id> to help correlate clicks with your affiliate dashboard.
 const merchantsToSeed = [
   {
     name: "Amazon",
-    baseUrl: "https://www.amazon.com",
-    cashbackRate: "2%",
+    baseUrl: "https://www.amazon.in",
+    cashbackRate: "Up to 8%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=amazon.in&sz=64",
   },
   {
     name: "Flipkart",
     baseUrl: "https://www.flipkart.com",
-    cashbackRate: "3%",
+    cashbackRate: "Up to 6%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=64",
   },
   {
     name: "Myntra",
     baseUrl: "https://www.myntra.com",
-    cashbackRate: "4%",
+    cashbackRate: "Up to 10%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=myntra.com&sz=64",
   },
   {
     name: "Nykaa",
     baseUrl: "https://www.nykaa.com",
-    cashbackRate: "5%",
+    cashbackRate: "Up to 7%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=nykaa.com&sz=64",
+  },
+  {
+    name: "Meesho",
+    baseUrl: "https://www.meesho.com",
+    cashbackRate: "Up to 5%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=meesho.com&sz=64",
+  },
+  {
+    name: "AJIO",
+    baseUrl: "https://www.ajio.com",
+    cashbackRate: "Up to 9%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=ajio.com&sz=64",
+  },
+  {
+    name: "Tata CLiQ",
+    baseUrl: "https://www.tatacliq.com",
+    cashbackRate: "Up to 6%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=tatacliq.com&sz=64",
+  },
+  {
+    name: "Snapdeal",
+    baseUrl: "https://www.snapdeal.com",
+    cashbackRate: "Up to 5%",
+    logoUrl: "https://www.google.com/s2/favicons?domain=snapdeal.com&sz=64",
   },
 ];
 
@@ -59,6 +93,7 @@ const seed = async () => {
             network_id = ${network.id},
             base_url = ${merchant.baseUrl},
             cashback_rate = ${merchant.cashbackRate},
+            logo_url = ${merchant.logoUrl},
             updated_at = now()
           where id = ${existing[0].id}
         `;
@@ -67,8 +102,8 @@ const seed = async () => {
       }
 
       await sql`
-        insert into merchants (network_id, name, base_url, cashback_rate)
-        values (${network.id}, ${merchant.name}, ${merchant.baseUrl}, ${merchant.cashbackRate})
+        insert into merchants (network_id, name, base_url, cashback_rate, logo_url)
+        values (${network.id}, ${merchant.name}, ${merchant.baseUrl}, ${merchant.cashbackRate}, ${merchant.logoUrl})
       `;
 
       insertedCount += 1;
