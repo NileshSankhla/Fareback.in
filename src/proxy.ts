@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionTokenFromRequest } from "@/lib/session-cookie";
 
 const protectedRoutes = ["/dashboard"];
 const authRoutes = ["/sign-in", "/sign-up"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionToken = request.cookies.get("session")?.value;
+  const sessionToken = getSessionTokenFromRequest(request);
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route),

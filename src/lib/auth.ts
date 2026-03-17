@@ -7,8 +7,8 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import { sessions, users } from "@/lib/db/schema";
+import { SESSION_COOKIE_NAME } from "@/lib/session-cookie";
 
-const SESSION_COOKIE_NAME = "session_token";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface CurrentUser {

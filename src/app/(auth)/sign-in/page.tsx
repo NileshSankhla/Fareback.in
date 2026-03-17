@@ -15,7 +15,15 @@ export const metadata: Metadata = {
   description: "Sign in to your account.",
 };
 
-const SignInPage = () => (
+interface SignInPageProps {
+  searchParams: Promise<{ redirect?: string }>;
+}
+
+const SignInPage = async ({ searchParams }: SignInPageProps) => {
+  const params = await searchParams;
+  const redirectTo = params.redirect?.trim() || "/dashboard";
+
+  return (
   <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -23,7 +31,7 @@ const SignInPage = () => (
         <CardDescription>Sign in to your account to continue</CardDescription>
       </CardHeader>
       <CardContent>
-        <SignInForm />
+        <SignInForm redirectTo={redirectTo} />
         <div className="mt-4 text-right">
           <Link
             href="/forgot-password"
@@ -41,6 +49,7 @@ const SignInPage = () => (
       </CardFooter>
     </Card>
   </div>
-);
+  );
+};
 
 export default SignInPage;

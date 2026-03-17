@@ -3,32 +3,33 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { signInAction, type AuthActionState } from "@/app/actions/auth";
+import {
+  requestPasswordResetAction,
+  type AuthActionState,
+} from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const initialState: AuthActionState = {};
-
-interface SignInFormProps {
-  redirectTo: string;
-}
 
 const SubmitButton = () => {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Signing in..." : "Sign In"}
+      {pending ? "Generating link..." : "Send Reset Link"}
     </Button>
   );
 };
 
-const SignInForm = ({ redirectTo }: SignInFormProps) => {
-  const [state, formAction] = useActionState(signInAction, initialState);
+const ForgotPasswordForm = () => {
+  const [state, formAction] = useActionState(
+    requestPasswordResetAction,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="redirectTo" value={redirectTo} />
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium leading-none">
           Email
@@ -46,28 +47,12 @@ const SignInForm = ({ redirectTo }: SignInFormProps) => {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium leading-none">
-          Password
-        </label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          required
-        />
-        {state.fieldErrors?.password?.[0] ? (
-          <p className="text-sm text-destructive">{state.fieldErrors.password[0]}</p>
-        ) : null}
-      </div>
-
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
+      {state.success ? <p className="text-sm text-green-600">{state.success}</p> : null}
 
       <SubmitButton />
     </form>
   );
 };
 
-export default SignInForm;
+export default ForgotPasswordForm;

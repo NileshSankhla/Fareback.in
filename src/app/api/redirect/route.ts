@@ -24,10 +24,9 @@ export async function GET(request: NextRequest) {
 
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect", `/api/redirect?merchantId=${merchantId}`);
+      return NextResponse.redirect(signInUrl);
     }
 
     const [merchant] = await db
