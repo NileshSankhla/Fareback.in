@@ -1,4 +1,4 @@
-import HeroSection from "@/components/hero-section";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -8,34 +8,6 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { merchants } from "@/lib/db/schema";
-import { Database, Palette, Shield, Zap } from "lucide-react";
-
-const features = [
-  {
-    icon: Zap,
-    title: "Blazing Fast",
-    description:
-      "Powered by Bun runtime and Next.js 16 App Router with React Server Components for optimal performance.",
-  },
-  {
-    icon: Palette,
-    title: "Beautiful UI",
-    description:
-      "Shadcn/UI components with Tailwind CSS v4, dark mode by default, and animated gradients out of the box.",
-  },
-  {
-    icon: Database,
-    title: "Type-Safe Database",
-    description:
-      "Drizzle ORM with PostgreSQL gives you edge-compatible, fully type-safe database access with zero overhead.",
-  },
-  {
-    icon: Shield,
-    title: "Auth Ready",
-    description:
-      "Authentication scaffolding with Zod validation, ready to integrate with NextAuth or Clerk in minutes.",
-  },
-];
 
 const Page = async () => {
   let merchantList: (typeof merchants.$inferSelect)[] = [];
@@ -48,7 +20,17 @@ const Page = async () => {
 
   return (
     <>
-      <section id="merchants" className="border-b border-border/40 py-20">
+      <section className="border-b border-border/40 py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">CashbackCart</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+            Shop on your favorite stores through CashbackCart and earn cashback.
+            We track your eligible clicks and manually update wallet rewards after affiliate commissions are confirmed.
+          </p>
+        </div>
+      </section>
+
+      <section id="offers" className="border-b border-border/40 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -79,7 +61,7 @@ const Page = async () => {
                     </CardHeader>
                     <CardContent>
                       <CardDescription>
-                        Earn {merchant.cashbackRate} cashback
+                        Estimated cashback: {merchant.cashbackRate}
                       </CardDescription>
                     </CardContent>
                   </Card>
@@ -90,34 +72,38 @@ const Page = async () => {
         </div>
       </section>
 
-      <HeroSection />
-
-      <section id="features" className="py-20">
+      <section id="how-it-works" className="py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Everything You Need
+              How Cashback Works
             </h2>
             <p className="mt-4 text-muted-foreground">
-              A carefully curated tech stack to help you build and ship faster
-              than ever before.
+              Simple process for users while payouts are handled manually by admin.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map(({ icon: Icon, title, description }) => (
-              <Card
-                key={title}
-                className="border-border/60 bg-card/50 backdrop-blur-sm transition-shadow hover:shadow-md"
-              >
+          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
+            {[
+              {
+                title: "1. Sign In",
+                description: "Create your account and access your wallet section.",
+              },
+              {
+                title: "2. Shop Through CashbackCart",
+                description: "Click store cards and complete shopping on partner websites.",
+              },
+              {
+                title: "3. Withdraw to UPI",
+                description: "Request withdrawal from dashboard when wallet has available balance.",
+              },
+            ].map((item) => (
+              <Card key={item.title}>
                 <CardHeader>
-                  <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <CardTitle className="text-base">{title}</CardTitle>
+                  <CardTitle className="text-base">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{description}</CardDescription>
+                  <CardDescription>{item.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -125,71 +111,46 @@ const Page = async () => {
         </div>
       </section>
 
-      <section id="about" className="border-t border-border/40 py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Built for Real Products
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              This starter combines a polished frontend with strict typing,
-              validation, and database scaffolding so you can focus on business
-              logic instead of setup.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="border-t border-border/40 py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto mb-10 max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Simple Pricing
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Start free and scale only when your product grows.
-            </p>
-          </div>
-
-          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+      <section id="faq" className="border-t border-border/40 py-20">
+        <div className="container mx-auto max-w-4xl px-4">
+          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">FAQ</h2>
+          <div className="mt-8 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Starter</CardTitle>
-                <CardDescription>For early-stage projects.</CardDescription>
+                <CardTitle className="text-base">When does wallet update?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">$0</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Includes auth scaffolding, theming, and database schema.
-                </p>
+                <CardDescription>
+                  Wallet updates are done manually by admin after affiliate commissions are confirmed by partner networks.
+                </CardDescription>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
-                <CardTitle>Pro</CardTitle>
-                <CardDescription>For production applications.</CardDescription>
+                <CardTitle className="text-base">How do I withdraw?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">$29</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Adds analytics, advanced auth providers, and team workflows.
-                </p>
+                <CardDescription>
+                  Go to your dashboard, enter UPI ID and amount, then submit a withdrawal request.
+                </CardDescription>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Need help?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Contact support at support@cashbackcart.in after launch.
+                </CardDescription>
               </CardContent>
             </Card>
           </div>
-        </div>
-      </section>
-
-      <section id="contact" className="border-t border-border/40 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Contact
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Questions about implementation, deployment, or customization? Reach
-            us at hello@my-modern-web.dev.
-          </p>
+          <div className="mt-10 text-center">
+            <Link href="/sign-up" className="text-primary hover:underline">
+              Create your CashbackCart account
+            </Link>
+          </div>
         </div>
       </section>
     </>

@@ -1,6 +1,9 @@
 import {
+  boolean,
+  check,
   index,
   integer,
+  pgEnum,
   pgTable,
   serial,
   text,
@@ -8,15 +11,29 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: text("password_hash"),
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const walletTransactionTypeEnum = pgEnum("wallet_transaction_type", [
+  "credit",
+  "debit",
+]);
+
+export const withdrawalStatusEnum = pgEnum("withdrawal_status", [
+  "pending",
+  "approved",
+  "rejected",
+  "paid",
+]);
 
 export const networks = pgTable("networks", {
   id: serial("id").primaryKey(),
@@ -81,4 +98,54 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   index("password_reset_tokens_user_id_idx").on(table.userId),
   index("password_reset_tokens_expires_at_idx").on(table.expiresAt),
   index("password_reset_tokens_token_idx").on(table.token),
+]);
+
+export const wallets = pgTable("wallets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .unique(),
+  balanceInPaise: integer("balance_in_paise").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("wallets_user_id_idx").on(table.userId),
+  check("wallets_balance_non_negative", sql`${table.balanceInPaise} >= 0`),
+]);
+
+export const walletTransactions = pgTable("wallet_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: walletTransactionTypeEnum("type").notNull(),
+  amountInPaise: integer("amount_in_paise").notNull(),
+  note: text("note"),
+  adminUserId: integer("admin_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("wallet_transactions_user_id_idx").on(table.userId),
+  index("wallet_transactions_admin_user_id_idx").on(table.adminUserId),
+  index("wallet_transactions_created_at_idx").on(table.createdAt),
+  check("wallet_transactions_amount_positive", sql`${table.amountInPaise} > 0`),
+]);
+
+export const withdrawalRequests = pgTable("withdrawal_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  upiId: varchar("upi_id", { length: 255 }).notNull(),
+  amountInPaise: integer("amount_in_paise").notNull(),
+  status: withdrawalStatusEnum("status").notNull().default("pending"),
+  adminNote: text("admin_note"),
+  processedByAdminId: integer("processed_by_admin_id").references(() => users.id),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("withdrawal_requests_user_id_idx").on(table.userId),
+  index("withdrawal_requests_status_idx").on(table.status),
+  index("withdrawal_requests_created_at_idx").on(table.createdAt),
+  check("withdrawal_requests_amount_positive", sql`${table.amountInPaise} > 0`),
 ]);

@@ -12,8 +12,10 @@ import {
   hashPassword,
   verifyPassword,
 } from "@/lib/auth";
+import { isConfiguredAdminEmail } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { passwordResetTokens, sessions, users } from "@/lib/db/schema";
+import { ensureWalletForUser } from "@/lib/wallet";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -79,8 +81,11 @@ export const signUpAction = async (
         name: payload.name,
         email: payload.email,
         passwordHash: hashPassword(payload.password),
+        isAdmin: isConfiguredAdminEmail(payload.email),
       })
       .returning({ id: users.id });
+
+    await ensureWalletForUser(createdUser.id);
 
     await createSession(createdUser.id);
     redirect("/dashboard");

@@ -8,11 +8,11 @@ const Footer = () => (
         <div className="md:col-span-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <Code2 className="h-6 w-6 text-primary" />
-            <span>my-modern-web</span>
+            <span>CashbackCart</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            A production-ready Next.js foundation built with performance,
-            developer experience, and scalability in mind.
+            CashbackCart lets users shop via affiliate offers and withdraw
+            earnings through UPI requests handled by admin.
           </p>
           <div className="mt-4 flex gap-4">
             <Link
@@ -37,18 +37,18 @@ const Footer = () => (
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li>
               <Link
-                href="#features"
+                href="#offers"
                 className="transition-colors hover:text-foreground"
               >
-                Features
+                Offers
               </Link>
             </li>
             <li>
               <Link
-                href="#pricing"
+                href="#how-it-works"
                 className="transition-colors hover:text-foreground"
               >
-                Pricing
+                How It Works
               </Link>
             </li>
             <li>
@@ -87,7 +87,7 @@ const Footer = () => (
 
       <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
         <p>
-          &copy; {new Date().getFullYear()} my-modern-web. All rights reserved.
+          &copy; {new Date().getFullYear()} CashbackCart. All rights reserved.
         </p>
       </div>
     </div>

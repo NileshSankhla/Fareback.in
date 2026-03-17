@@ -6,27 +6,27 @@ import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "my-modern-web",
-    template: "%s | my-modern-web",
+    default: "CashbackCart",
+    template: "%s | CashbackCart",
   },
   description:
-    "A production-ready Next.js 16 foundation with Bun, TypeScript, Tailwind CSS v4, and Drizzle ORM.",
-  keywords: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Drizzle ORM"],
-  authors: [{ name: "my-modern-web" }],
+    "CashbackCart helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
+  keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping"],
+  authors: [{ name: "CashbackCart" }],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "/",
-    title: "my-modern-web",
+    title: "CashbackCart",
     description:
-      "A production-ready Next.js 16 foundation with Bun, TypeScript, Tailwind CSS v4, and Drizzle ORM.",
-    siteName: "my-modern-web",
+      "Shop through CashbackCart partner cards, track eligibility, and request withdrawals to UPI.",
+    siteName: "CashbackCart",
   },
   twitter: {
     card: "summary_large_image",
-    title: "my-modern-web",
+    title: "CashbackCart",
     description:
-      "A production-ready Next.js 16 foundation with Bun, TypeScript, Tailwind CSS v4, and Drizzle ORM.",
+      "Affiliate cashback made simple with manual wallet and withdrawal management.",
   },
 };
 

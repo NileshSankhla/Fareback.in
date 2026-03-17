@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionTokenFromRequest } from "@/lib/session-cookie";
 
-const protectedRoutes = ["/dashboard"];
+const protectedRoutes = ["/dashboard", "/admin"];
 const authRoutes = ["/sign-in", "/sign-up"];
 
 export async function proxy(request: NextRequest) {

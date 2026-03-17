@@ -15,6 +15,7 @@ export interface CurrentUser {
   id: number;
   name: string | null;
   email: string;
+  isAdmin: boolean;
 }
 
 export const hashPassword = (password: string) => {
@@ -81,6 +82,7 @@ export const getCurrentUser = async (): Promise<CurrentUser | null> => {
       id: users.id,
       name: users.name,
       email: users.email,
+      isAdmin: users.isAdmin,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
