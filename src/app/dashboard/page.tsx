@@ -14,6 +14,7 @@ import {
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withdrawalRequests } from "@/lib/db/schema";
+import { formatDate } from "@/lib/utils";
 import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
 
 export const metadata: Metadata = {
@@ -72,7 +73,7 @@ const DashboardPage = async () => {
               {pendingWithdrawal ? (
                 <p className="text-sm text-muted-foreground">
                   Pending request: {formatPaiseAsINR(pendingWithdrawal.amountInPaise)} requested on{" "}
-                  {pendingWithdrawal.createdAt.toLocaleString()}.
+                  {formatDate(pendingWithdrawal.createdAt)}.
                 </p>
               ) : null}
             </div>

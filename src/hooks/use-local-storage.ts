@@ -1,51 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 export const useLocalStorage = <T>(
   key: string,
   initialValue: T,
 ): [T, (value: T | ((val: T) => T)) => void] => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === "undefined") return initialValue;
+  const initialValueRef = useRef(initialValue);
 
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const handler = (event: StorageEvent) => {
+        if (event.key === key) callback();
+      };
+      window.addEventListener("storage", handler);
+      return () => window.removeEventListener("storage", handler);
+    },
+    [key],
+  );
+
+  const getSnapshot = useCallback((): T => {
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      const item = localStorage.getItem(key);
+      return item !== null ? (JSON.parse(item) as T) : initialValueRef.current;
     } catch {
-      return initialValue;
+      return initialValueRef.current;
     }
-  });
+  }, [key]);
 
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore =
-        value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.error(`Error setting localStorage key "${key}":`, error);
-      }
-    }
-  };
+  const getServerSnapshot = useCallback(
+    (): T => initialValueRef.current,
+    [],
+  );
 
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.newValue !== null) {
-        try {
-          setStoredValue(JSON.parse(event.newValue) as T);
-        } catch {
-          // ignore parse errors
+  const storedValue = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      try {
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        const serialized = JSON.stringify(valueToStore);
+        window.localStorage.setItem(key, serialized);
+        window.dispatchEvent(new StorageEvent("storage", { key, newValue: serialized }));
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error(`Error setting localStorage key "${key}":`, error);
         }
       }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [key]);
+    },
+    [key, storedValue],
+  );
 
   return [storedValue, setValue];
 };

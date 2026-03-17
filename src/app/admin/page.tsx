@@ -24,6 +24,7 @@ import {
   withdrawalRequests,
 } from "@/lib/db/schema";
 import { formatPaiseAsINR } from "@/lib/wallet";
+import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -161,7 +162,7 @@ const AdminPage = async () => {
                   {request.userName ?? "User"} ({request.userEmail})
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Amount: {formatPaiseAsINR(request.amountInPaise)} | UPI: {request.upiId} | Requested: {request.createdAt.toLocaleString()}
+                  Amount: {formatPaiseAsINR(request.amountInPaise)} | UPI: {request.upiId} | Requested: {formatDate(request.createdAt)}
                 </p>
                 <form action={adminProcessWithdrawalFormAction} className="mt-3 flex flex-col gap-2 md:flex-row md:items-center">
                   <input type="hidden" name="requestId" value={request.id} />
@@ -190,7 +191,7 @@ const AdminPage = async () => {
               <div key={click.id} className="rounded-lg border border-border/60 p-3">
                 <p className="font-medium">{click.merchantName}</p>
                 <p className="text-muted-foreground">
-                  {click.userEmail} | {click.createdAt.toLocaleString()}
+                  {click.userEmail} | {formatDate(click.createdAt)}
                 </p>
               </div>
             ))}
@@ -208,7 +209,7 @@ const AdminPage = async () => {
                   {tx.type.toUpperCase()} {formatPaiseAsINR(tx.amountInPaise)}
                 </p>
                 <p className="text-muted-foreground">
-                  {tx.userEmail} | {tx.createdAt.toLocaleString()}
+                  {tx.userEmail} | {formatDate(tx.createdAt)}
                 </p>
                 {tx.note ? <p className="text-muted-foreground">{tx.note}</p> : null}
               </div>
