@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -46,23 +47,37 @@ const Page = async () => {
               No merchants available yet. Check back soon!
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
               {merchantList.map((merchant) => (
                 <a
                   key={merchant.id}
                   href={`/api/redirect?merchantId=${merchant.id}`}
                   className="block"
+                  aria-label={`Shop at ${merchant.name} and earn ${merchant.cashbackRate} cashback`}
                 >
-                  <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-shadow hover:shadow-md">
-                    <CardHeader>
-                      <CardTitle className="text-base">
+                  <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-all hover:shadow-md hover:scale-105">
+                    <CardHeader className="items-center pb-2">
+                      {merchant.logoUrl ? (
+                        <div className="mb-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-1">
+                          <Image
+                            src={merchant.logoUrl}
+                            alt={`${merchant.name} logo`}
+                            width={40}
+                            height={40}
+                            className="object-contain"
+                            unoptimized
+                          />
+                        </div>
+                      ) : null}
+                      <CardTitle className="text-center text-base">
                         {merchant.name}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <CardDescription>
-                        Estimated cashback: {merchant.cashbackRate}
+                    <CardContent className="text-center">
+                      <CardDescription className="font-medium text-primary">
+                        {merchant.cashbackRate}
                       </CardDescription>
+                      <CardDescription className="mt-1 text-xs">cashback</CardDescription>
                     </CardContent>
                   </Card>
                 </a>

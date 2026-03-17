@@ -51,6 +51,7 @@ export const merchants = pgTable("merchants", {
   name: text("name").notNull(),
   baseUrl: text("base_url").notNull(),
   cashbackRate: text("cashback_rate").notNull(),
+  logoUrl: text("logo_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

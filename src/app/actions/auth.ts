@@ -46,6 +46,8 @@ export const signUpAction = async (
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> => {
+  let userId: number | null = null;
+
   try {
     const payload = {
       name: getString(formData.get("name")).trim(),
@@ -86,21 +88,28 @@ export const signUpAction = async (
       .returning({ id: users.id });
 
     await ensureWalletForUser(createdUser.id);
-
     await createSession(createdUser.id);
-    redirect("/dashboard");
+    userId = createdUser.id;
   } catch (error) {
     console.error("Sign up error:", error);
     return {
       error: "An error occurred during sign up. Please try again.",
     };
   }
+
+  if (userId !== null) {
+    redirect("/dashboard");
+  }
+
+  return { error: "An error occurred during sign up. Please try again." };
 };
 
 export const signInAction = async (
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> => {
+  let redirectPath: string | null = null;
+
   try {
     const payload = {
       email: getString(formData.get("email")).trim().toLowerCase(),
@@ -135,13 +144,19 @@ export const signInAction = async (
     }
 
     await createSession(existingUser.id);
-    redirect(getSafeRedirectPath(payload.redirectTo));
+    redirectPath = getSafeRedirectPath(payload.redirectTo);
   } catch (error) {
     console.error("Sign in error:", error);
     return {
       error: "An error occurred during sign in. Please try again.",
     };
   }
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
+  return { error: "An error occurred during sign in. Please try again." };
 };
 
 export const signOutAction = async () => {
