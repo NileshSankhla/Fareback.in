@@ -1,0 +1,77 @@
+This project is a modern full-stack web starter focused on building a cashback/affiliate-style application quickly, with production-ready foundations already set up.
+
+**Main Objective**
+1. Provide a ready-to-ship Next.js foundation (auth, DB, UI, routing, security, typing, linting).
+2. Implement a real business flow scaffold:
+   1. User authentication.
+   2. Merchant listing.
+   3. Click tracking.
+   4. Redirect to merchant URL with tracking subid.
+
+**What This Project Is For**
+1. Building SaaS/web products faster without spending time on initial setup.
+2. Running a cashback/affiliate link platform where logged-in users click merchant offers and clicks are tracked in the database.
+3. Acting as a reusable boilerplate for future products with auth + DB + theming already integrated.
+
+**Technologies Used And Their Jobs**
+1. Next.js 16 (App Router): Full-stack React framework, routing, server rendering, route handlers, middleware.
+2. React 19: UI component model and client interactivity.
+3. TypeScript (strict): Strong typing and safer refactoring.
+4. Tailwind CSS v4: Utility-first styling and design tokens.
+5. PostCSS + Tailwind plugin: CSS processing pipeline for Tailwind v4.
+6. next-themes: Light/dark theme switching with class-based theme control.
+7. Radix Slot + class-variance-authority + clsx + tailwind-merge: Reusable, variant-based UI components and class composition.
+8. Lucide React: Icon system for UI.
+9. Drizzle ORM: Type-safe SQL queries and schema mapping.
+10. drizzle-kit: DB schema push/migration/studio tooling.
+11. PostgreSQL: Relational database for users, sessions, merchants, clicks, networks.
+12. postgres (driver): Runtime PostgreSQL client.
+13. Zod: Runtime input validation for auth forms and payloads.
+14. Node.js crypto (scrypt, randomBytes, timingSafeEqual): Password hashing and secure verification.
+15. Next cookies API: Session token storage in HTTP-only cookie.
+16. Docker Compose: Local PostgreSQL container orchestration.
+17. ESLint + eslint-config-next: Linting and code-quality rules.
+18. Next metadata + Open Graph/Twitter fields: SEO and social preview metadata.
+19. Security headers in Next config: Hardening (X-Frame-Options, nosniff, referrer policy, permissions policy, etc.).
+
+**Core Functional Elements Included**
+1. Authentication system:
+   1. Sign up.
+   2. Sign in.
+   3. Sign out.
+   4. Session creation/validation.
+2. Protected route behavior:
+   1. Dashboard requires auth.
+   2. Middleware-based redirects for auth/protected pages.
+3. Database schema for core domain:
+   1. Users.
+   2. Sessions.
+   3. Networks.
+   4. Merchants.
+   5. Clicks.
+4. Merchant redirect tracking API:
+   1. Validates merchant ID.
+   2. Requires authenticated user.
+   3. Logs click in DB.
+   4. Redirects to merchant URL with click subid.
+5. UI system:
+   1. Reusable Button/Card/Input components.
+   2. Navbar/Footer/Hero sections.
+   3. Theme switcher.
+6. UX/error handling:
+   1. Global loading UI.
+   2. Error boundary page.
+   3. 404 page.
+   4. Static legal pages (privacy/terms scaffold).
+   5. Forgot-password page scaffold (coming soon flow).
+
+**Important Notes**
+1. The codebase reads like both:
+   1. A reusable starter template.
+   2. A cashback/affiliate MVP scaffold.
+2. There is a small implementation mismatch to verify later: middleware checks one cookie name while auth session utilities use another cookie name.
+3. Documentation mentions Bun/Node details in places, but package scripts currently run via npm.
+
+If you want, I can next give you:
+1. A simplified architecture diagram (request → middleware → server action/API → DB).
+2. A “what to build next” roadmap (password reset, email verification, admin merchant panel, analytics).
