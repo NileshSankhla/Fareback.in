@@ -7,7 +7,8 @@ A production-ready, high-performance web foundation built with the best modern t
 | Tool | Purpose |
 |---|---|
 | **Next.js 16** (App Router) | Framework with React Server Components |
-| **Bun** | Runtime & package manager |
+| **Node.js 24** | Runtime |
+| **npm** | Package manager |
 | **TypeScript** (strict) | Type safety |
 | **Tailwind CSS v4** | Styling, dark mode default |
 | **Shadcn/UI** (Radix UI) | Atomic UI components |
@@ -57,7 +58,7 @@ src/
 ```bash
 git clone https://github.com/NileshSankhla/my-modern-web.git
 cd my-modern-web
-bun install
+npm install
 ```
 
 ### 2. Set up environment variables
@@ -76,13 +77,13 @@ docker compose up -d
 ### 4. Run database migrations
 
 ```bash
-bun run db:push
+npm run db:push
 ```
 
 ### 5. Start the development server
 
 ```bash
-bun dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -93,10 +94,10 @@ This project uses [Drizzle ORM](https://orm.drizzle.team/) with PostgreSQL.
 
 ```bash
 # Push schema to database
-bun run db:push
+npm run db:push
 
 # Open Drizzle Studio (visual database browser)
-bun run db:studio
+npm run db:studio
 ```
 
 ## Deployment
