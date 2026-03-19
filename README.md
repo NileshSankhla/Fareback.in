@@ -112,39 +112,62 @@ The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 | `VERCEL_ORG_ID` | Vercel organization ID |
 | `VERCEL_PROJECT_ID` | Vercel project ID |
 
-### Neon Postgres on Vercel
+### Vercel + Neon Postgres Setup
 
-This project uses [Neon](https://neon.tech) as its hosted PostgreSQL provider.
+This app uses **two** environment variables for the database:
 
-#### 1. Connect Neon to your Vercel project
+| Variable | Connection type | Used by |
+|---|---|---|
+| `DATABASE_URL` | Pooled (PgBouncer) | Running Next.js app (all queries) |
+| `DATABASE_URL_UNPOOLED` | Direct (no pooler) | Drizzle Kit migrations (`db:push`, `db:migrate`, `db:studio`) |
 
-1. Open your Vercel project → **Storage** tab → **Connect Database** → choose **Neon**.
-2. Follow the wizard. Vercel automatically adds the following environment variables to every environment (Production, Preview, Development):
+#### 1. Get your Neon connection strings
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Pooled connection (PgBouncer – used by the app at runtime) |
-| `DATABASE_URL_UNPOOLED` | Direct connection (used by drizzle-kit for migrations) |
-| `DATABASE_PGHOST`, `DATABASE_PGUSER`, `DATABASE_PGPASSWORD` | Individual connection parameters |
+1. Open your [Neon dashboard](https://console.neon.tech) → select your project.
+2. Go to **Connection Details**.
+3. Copy **both** URLs:
+   - **Pooled** (contains `-pooler` in the host):
+     ```
+     postgres://<user>:<password>@ep-xxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+   - **Direct / Unpooled** (no `-pooler`):
+     ```
+     postgres://<user>:<password>@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
 
-> **Tip:** If you connected Neon manually (without the Vercel Storage wizard), ensure `DATABASE_URL` is set to the pooled Neon URL and `DATABASE_URL_UNPOOLED` is set to the direct Neon URL.  Both must include `?sslmode=require`.
+> **Why two URLs?**  
+> PgBouncer runs in *transaction mode* for Neon pooled connections. This can interfere with DDL statements (CREATE TABLE, ALTER TABLE, etc.) that Drizzle Kit issues during migrations. The direct connection bypasses PgBouncer so migrations always succeed.
 
-#### 2. Run migrations against Neon
+#### 2. Set environment variables in Vercel
 
-From your local machine, with `.env.local` containing the Neon `DATABASE_URL_UNPOOLED` value (copy it from Vercel → Settings → Environment Variables):
+1. Vercel Dashboard → your project → **Settings → Environment Variables**.
+2. Add (or update) these two variables for **all environments** (Production, Preview, Development):
+
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | Your Neon **pooled** connection string |
+   | `DATABASE_URL_UNPOOLED` | Your Neon **direct** connection string |
+
+3. Click **Save**, then **Redeploy** (or push a new commit) to pick up the changes.
+
+> If Vercel's Neon integration already created `DATABASE_URL_UNPOOLED` and the other `DATABASE_*` variables, you may already have both — just verify the values are correct.
+
+#### 3. Run migrations against Neon (one-time)
+
+Before the first deployment (or after schema changes), push the schema to Neon.  
+From your local machine with the Neon URLs in `.env.local`:
 
 ```bash
-# Push the Drizzle schema to Neon (creates / aligns all tables)
-npm run db:push
-
-# Or, if you prefer tracked migration files:
-npm run db:generate   # generate SQL migration files
-npm run db:migrate    # apply migrations to the database
+# .env.local
+DATABASE_URL=postgres://<user>:<password>@ep-xxx-pooler...neon.tech/neondb?sslmode=require
+DATABASE_URL_UNPOOLED=postgres://<user>:<password>@ep-xxx...neon.tech/neondb?sslmode=require
 ```
 
-#### 3. Redeploy
+```bash
+npm run db:push
+```
 
-After running migrations, trigger a new Vercel deployment (e.g. via `git push`) to pick up the live database.
+This uses Drizzle Kit (via the direct `DATABASE_URL_UNPOOLED` connection) to create all tables in the Neon database.
 
 ## Contributing
 

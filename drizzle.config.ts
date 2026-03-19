@@ -1,13 +1,15 @@
 import { defineConfig } from "drizzle-kit";
 
-// Prefer the direct (non-pooled) URL for migrations so that drizzle-kit can
-// run DDL statements over a standard connection rather than through PgBouncer.
-// Falls back to DATABASE_URL for local development where there is only one URL.
-const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+// Migrations (db:push / db:migrate / db:studio) use the UNPOOLED (direct)
+// connection so that DDL statements work correctly against Neon.
+// PgBouncer in transaction mode can interfere with schema-altering DDL.
+// The running app uses DATABASE_URL (pooled) instead — see src/lib/db/index.ts.
+const migrationUrl =
+  process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 
-if (!url) {
+if (!migrationUrl) {
   throw new Error(
-    "Set DATABASE_URL_UNPOOLED (or DATABASE_URL) before running drizzle-kit commands.",
+    "Set DATABASE_URL_UNPOOLED (preferred) or DATABASE_URL before running drizzle-kit."
   );
 }
 
@@ -16,6 +18,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url,
+    url: migrationUrl,
   },
 });

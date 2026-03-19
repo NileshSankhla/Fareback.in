@@ -16,14 +16,14 @@ const Footer = () => (
           </p>
           <div className="mt-4 flex gap-4">
             <Link
-              href="https://github.com"
+              href={process.env.NEXT_PUBLIC_GITHUB_URL ?? "https://github.com"}
               aria-label="GitHub"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
               <Github className="h-5 w-5" />
             </Link>
             <Link
-              href="https://twitter.com"
+              href={process.env.NEXT_PUBLIC_TWITTER_URL ?? "https://twitter.com"}
               aria-label="Twitter"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
