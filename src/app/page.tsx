@@ -156,7 +156,7 @@ const Page = async () => {
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Contact support at support@cashbackcart.in after launch.
+                  Contact support at nileshsankhlakgp@gmail.com
                 </CardDescription>
               </CardContent>
             </Card>
