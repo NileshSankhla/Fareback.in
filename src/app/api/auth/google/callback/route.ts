@@ -11,6 +11,15 @@ import { isConfiguredAdminEmail } from "@/lib/admin";
 import { ensureWalletForUser } from "@/lib/wallet";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
+const GOOGLE_OAUTH_REDIRECT_COOKIE = "google_oauth_redirect";
+
+const getSafeRedirectPath = (redirectTo: string) => {
+  if (!redirectTo.startsWith("/") || redirectTo.startsWith("//")) {
+    return "/dashboard";
+  }
+
+  return redirectTo;
+};
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -46,7 +55,10 @@ export async function GET(request: NextRequest) {
 
   const cookieStore = await cookies();
   const storedState = cookieStore.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
+  const storedRedirect = cookieStore.get(GOOGLE_OAUTH_REDIRECT_COOKIE)?.value;
   cookieStore.delete(GOOGLE_OAUTH_STATE_COOKIE);
+  cookieStore.delete(GOOGLE_OAUTH_REDIRECT_COOKIE);
+  const redirectPath = getSafeRedirectPath(storedRedirect ?? "/dashboard");
 
   if (!storedState || storedState !== state) {
     return NextResponse.redirect(
@@ -146,5 +158,5 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  redirect("/dashboard");
+  redirect(redirectPath);
 }

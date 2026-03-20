@@ -68,6 +68,41 @@ cp .env.example .env.local
 # Edit .env.local with your values
 ```
 
+#### Google-only authentication setup (required)
+
+This project is configured for Google OAuth only (no email/password sign-in).
+
+1. Open Google Cloud Console: <https://console.cloud.google.com>.
+2. Create a project (or select an existing one).
+3. Go to **APIs & Services → OAuth consent screen**.
+4. Choose **External** user type (for public users) and fill app details.
+5. Add scopes: `openid`, `email`, `profile`.
+6. Add test users if your app is still in testing mode.
+7. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**.
+8. Application type: **Web application**.
+9. Add Authorized JavaScript origins:
+  - `http://localhost:3000`
+  - `https://your-production-domain.com`
+10. Add Authorized redirect URIs:
+  - `http://localhost:3000/api/auth/google/callback`
+  - `https://your-production-domain.com/api/auth/google/callback`
+11. Click **Create** and copy **Client ID** and **Client Secret**.
+12. Put them in `.env.local`:
+
+```bash
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+13. For Vercel production, add the same variables in **Project Settings → Environment Variables**:
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `NEXT_PUBLIC_APP_URL=https://your-production-domain.com`
+14. Redeploy after saving variables.
+
+If Google shows `redirect_uri_mismatch`, the URI in Google Console must match exactly, including protocol (`http` vs `https`), domain, and path.
+
 ### 3. Start the local database
 
 ```bash

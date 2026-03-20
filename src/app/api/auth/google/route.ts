@@ -1,13 +1,24 @@
+import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
+const GOOGLE_OAUTH_REDIRECT_COOKIE = "google_oauth_redirect";
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-export async function GET() {
+const getSafeRedirectPath = (redirectTo: string) => {
+  if (!redirectTo.startsWith("/") || redirectTo.startsWith("//")) {
+    return "/dashboard";
+  }
+
+  return redirectTo;
+};
+
+export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const requestedRedirect = request.nextUrl.searchParams.get("redirect") ?? "/dashboard";
+  const redirectTo = getSafeRedirectPath(requestedRedirect);
 
   if (!clientId) {
     return NextResponse.json(
@@ -31,6 +42,13 @@ export async function GET() {
 
   const cookieStore = await cookies();
   cookieStore.set(GOOGLE_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: STATE_TTL_MS / 1000,
+  });
+  cookieStore.set(GOOGLE_OAUTH_REDIRECT_COOKIE, redirectTo, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

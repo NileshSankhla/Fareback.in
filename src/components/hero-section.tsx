@@ -40,7 +40,7 @@ const HeroSection = () => (
     {/* CTA buttons */}
     <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
       <Button size="lg" asChild>
-        <Link href="/sign-up">
+        <Link href="/sign-in">
           Get Started Free
           <ArrowRight className="ml-1 h-4 w-4" />
         </Link>

@@ -53,7 +53,7 @@ const Footer = () => (
             </li>
             <li>
               <Link
-                href="/sign-up"
+                href="/sign-in"
                 className="transition-colors hover:text-foreground"
               >
                 Get Started

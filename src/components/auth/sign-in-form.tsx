@@ -1,33 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-
-import { signInAction, type AuthActionState } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-const initialState: AuthActionState = {};
 
 interface SignInFormProps {
   redirectTo: string;
   googleError?: string | null;
 }
 
-const SubmitButton = () => {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Signing in..." : "Sign In"}
-    </Button>
-  );
-};
-
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   google_denied: "Google sign-in was cancelled.",
   google_invalid: "Invalid Google sign-in attempt. Please try again.",
-  google_config: "Google sign-in is not configured. Please use email/password.",
+  google_config: "Google sign-in is not configured. Please contact support.",
   google_token: "Failed to complete Google sign-in. Please try again.",
   google_userinfo: "Could not retrieve your Google account info. Please try again.",
   google_unverified: "Your Google email is not verified. Please verify it and try again.",
@@ -35,12 +18,11 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 };
 
 const SignInForm = ({ redirectTo, googleError }: SignInFormProps) => {
-  const [state, formAction] = useActionState(signInAction, initialState);
   const googleErrorMessage = googleError ? GOOGLE_ERROR_MESSAGES[googleError] : null;
 
   return (
     <div className="space-y-4">
-      <a href="/api/auth/google">
+      <a href={`/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`}>
         <Button type="button" variant="outline" className="w-full gap-2">
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
             <path
@@ -67,56 +49,6 @@ const SignInForm = ({ redirectTo, googleError }: SignInFormProps) => {
       {googleErrorMessage ? (
         <p className="text-sm text-destructive">{googleErrorMessage}</p>
       ) : null}
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">or</span>
-        </div>
-      </div>
-
-      <form action={formAction} className="space-y-4">
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium leading-none">
-            Email
-          </label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-          {state.fieldErrors?.email?.[0] ? (
-            <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium leading-none">
-            Password
-          </label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            required
-          />
-          {state.fieldErrors?.password?.[0] ? (
-            <p className="text-sm text-destructive">{state.fieldErrors.password[0]}</p>
-          ) : null}
-        </div>
-
-        {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
-
-        <SubmitButton />
-      </form>
     </div>
   );
 };

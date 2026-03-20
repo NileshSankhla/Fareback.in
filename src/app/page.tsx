@@ -162,7 +162,7 @@ const Page = async () => {
             </Card>
           </div>
           <div className="mt-10 text-center">
-            <Link href="/sign-up" className="text-primary hover:underline">
+            <Link href="/sign-in" className="text-primary hover:underline">
               Create your CashbackCart account
             </Link>
           </div>
