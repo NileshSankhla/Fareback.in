@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "db:push": "drizzle-kit push",
-    "db:seed": "node --env-file=.env --env-file=.env.local scripts/seed-merchants.mjs",
+    "db:seed": "bun --env-file=.env --env-file=.env.local scripts/seed-merchants.mjs",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
