@@ -8,7 +8,7 @@ A production-ready, high-performance web foundation built with the best modern t
 |---|---|
 | **Next.js 16** (App Router) | Framework with React Server Components |
 | **Node.js 24** | Runtime |
-| **npm** | Package manager |
+| **Bun** | Package manager & runtime |
 | **TypeScript** (strict) | Type safety |
 | **Tailwind CSS v4** | Styling, dark mode default |
 | **Shadcn/UI** (Radix UI) | Atomic UI components |
@@ -58,7 +58,7 @@ src/
 ```bash
 git clone https://github.com/NileshSankhla/my-modern-web.git
 cd my-modern-web
-npm install
+bun install
 ```
 
 ### 2. Set up environment variables
@@ -77,13 +77,13 @@ docker compose up -d
 ### 4. Run database migrations
 
 ```bash
-npm run db:push
+bun run db:push
 ```
 
 ### 5. Start the development server
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -94,10 +94,10 @@ This project uses [Drizzle ORM](https://orm.drizzle.team/) with PostgreSQL.
 
 ```bash
 # Push schema to database
-npm run db:push
+bun run db:push
 
 # Open Drizzle Studio (visual database browser)
-npm run db:studio
+bun run db:studio
 ```
 
 ## Deployment
@@ -164,7 +164,7 @@ DATABASE_URL_UNPOOLED=postgres://<user>:<password>@ep-xxx...neon.tech/neondb?ssl
 ```
 
 ```bash
-npm run db:push
+bun run db:push
 ```
 
 This uses Drizzle Kit (via the direct `DATABASE_URL_UNPOOLED` connection) to create all tables in the Neon database.
