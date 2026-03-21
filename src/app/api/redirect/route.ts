@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { clicks, merchants } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
         .returning({ id: clicks.id });
     }
 
-    redirect(destinationUrl.toString());
+    return NextResponse.redirect(destinationUrl.toString(), { status: 307 });
   } catch (error) {
     console.error("Error in redirect API:", error);
     return NextResponse.json(
