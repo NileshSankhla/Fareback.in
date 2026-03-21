@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Code2, Github, Twitter } from "lucide-react";
+import { Code2, Instagram, Mail } from "lucide-react";
 
 const Footer = () => (
   <footer className="border-t border-border/40 bg-background">
@@ -16,19 +16,22 @@ const Footer = () => (
           </p>
           <div className="mt-4 flex gap-4">
             <Link
-              href={process.env.NEXT_PUBLIC_GITHUB_URL ?? "https://github.com"}
-              aria-label="GitHub"
+              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://instagram.com"}
+              aria-label="Instagram"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Github className="h-5 w-5" />
+              <Instagram className="h-5 w-5" />
             </Link>
-            <Link
-              href={process.env.NEXT_PUBLIC_TWITTER_URL ?? "https://twitter.com"}
-              aria-label="Twitter"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+            <a
+              href="mailto:support@fareback.in"
+              aria-label="Support"
+              className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground text-sm"
             >
-              <Twitter className="h-5 w-5" />
-            </Link>
+              <Mail className="h-5 w-5" />
+              <span>Support</span>
+            </a>
           </div>
         </div>
 
@@ -86,6 +89,9 @@ const Footer = () => (
       </div>
 
       <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
+        <p className="mb-2 text-xs">
+          *Affiliate rate: Cashback percentages shown are based on affiliate commission rates and may vary. Actual cashback credited to your wallet may differ.
+        </p>
         <p>
           &copy; {new Date().getFullYear()} Fareback. All rights reserved.
         </p>

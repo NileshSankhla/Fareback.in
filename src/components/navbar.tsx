@@ -63,7 +63,7 @@ const Navbar = async () => {
           ) : (
             <>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/sign-in">Continue with Google</Link>
+                <Link href="/sign-in">SignUp/SignIn</Link>
               </Button>
             </>
           )}
