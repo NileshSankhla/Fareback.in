@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { desc, eq, sql } from "drizzle-orm";
 import {
   Card,
   CardContent,
@@ -8,11 +9,44 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { merchants } from "@/lib/db/schema";
+import { clicks, merchants, walletTransactions } from "@/lib/db/schema";
+import { getCurrentUser } from "@/lib/auth";
+import HeroCarousel from "@/components/hero-carousel";
+import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 
-const TEST_CASHBACK_RATE = "2%";
+async function getFavoritePlatform(
+  userId: number | null,
+  merchantList: { id: number; name: string }[],
+): Promise<string> {
+  if (merchantList.length === 0) return "your favorite store";
+
+  if (userId !== null) {
+    try {
+      const [top] = await db
+        .select({
+          merchantId: clicks.merchantId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(clicks)
+        .where(eq(clicks.userId, userId))
+        .groupBy(clicks.merchantId)
+        .orderBy(desc(sql`count(*)`))
+        .limit(1);
+
+      if (top) {
+        const merchant = merchantList.find((m) => m.id === top.merchantId);
+        if (merchant) return merchant.name;
+      }
+    } catch {
+      // fall through to random selection
+    }
+  }
+
+  return merchantList[Math.floor(Math.random() * merchantList.length)].name;
+}
 
 const Page = async () => {
+  const user = await getCurrentUser();
   let merchantList: (typeof merchants.$inferSelect)[] = [];
 
   try {
@@ -21,8 +55,38 @@ const Page = async () => {
     console.error("Failed to fetch merchants:", error);
   }
 
+  const favoritePlatform = await getFavoritePlatform(
+    user?.id ?? null,
+    merchantList,
+  );
+
+  let trackedItems: TrackedHistoryItem[] = [];
+  if (user) {
+    try {
+      const txs = await db
+        .select()
+        .from(walletTransactions)
+        .where(eq(walletTransactions.userId, user.id))
+        .orderBy(desc(walletTransactions.createdAt))
+        .limit(20);
+
+      trackedItems = txs
+        .filter((tx) => tx.type === "credit")
+        .map((tx) => ({
+          id: tx.id,
+          merchantName: tx.note ?? "Purchase",
+          clickDate: tx.createdAt,
+          rewardAmount: tx.amountInPaise,
+          adminApproved: true,
+        }));
+    } catch (error) {
+      console.error("Failed to fetch tracked history:", error);
+    }
+  }
+
   return (
     <>
+      {/* Hero */}
       <section className="border-b border-border/40 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Fareback</h1>
@@ -33,11 +97,15 @@ const Page = async () => {
         </div>
       </section>
 
+      {/* Instructions Carousel */}
+      <HeroCarousel favoritePlatform={favoritePlatform} />
+
+      {/* Cashback Partners */}
       <section id="offers" className="border-b border-border/40 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Cashback Offers
+              Cashback Partners
             </h2>
             <p className="mt-4 text-muted-foreground">
               Shop through our partners and earn cashback on every purchase.
@@ -55,9 +123,9 @@ const Page = async () => {
                   key={merchant.id}
                   href={`/api/redirect?merchantId=${merchant.id}`}
                   className="block"
-                  aria-label={`Shop at ${merchant.name} and earn ${TEST_CASHBACK_RATE} cashback`}
+                  aria-label={`Shop at ${merchant.name} and earn up to ${merchant.cashbackRate} cashback`}
                 >
-                  <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-all hover:shadow-md hover:scale-105">
+                  <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-lg">
                     <CardHeader className="items-center pb-2">
                       {merchant.logoUrl ? (
                         <div className="mb-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-1">
@@ -77,9 +145,8 @@ const Page = async () => {
                     </CardHeader>
                     <CardContent className="text-center">
                       <CardDescription className="font-medium text-primary">
-                        {TEST_CASHBACK_RATE}
+                        up to {merchant.cashbackRate} cashback*
                       </CardDescription>
-                      <CardDescription className="mt-1 text-xs">cashback</CardDescription>
                     </CardContent>
                   </Card>
                 </a>
@@ -89,79 +156,62 @@ const Page = async () => {
         </div>
       </section>
 
-      <section id="how-it-works" className="py-20">
+      {/* Tracked History */}
+      <section id="tracked-history" className="border-b border-border/40 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              How Cashback Works
+              Tracked History
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Simple process for users while payouts are handled manually by admin.
+              Your cashback rewards tracked and approved by admin.
             </p>
           </div>
-
-          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
-            {[
-              {
-                title: "1. Sign In",
-                description: "Create your account and access your wallet section.",
-              },
-              {
-                title: "2. Shop Through Fareback",
-                description: "Click store cards and complete shopping on partner websites.",
-              },
-              {
-                title: "3. Withdraw to UPI",
-                description: "Request withdrawal from dashboard when wallet has available balance.",
-              },
-            ].map((item) => (
-              <Card key={item.title}>
-                <CardHeader>
-                  <CardTitle className="text-base">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{item.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {user ? (
+            <TrackedHistory items={trackedItems} />
+          ) : (
+            <p className="text-center text-muted-foreground">
+              <Link href="/sign-in" className="text-primary hover:underline">
+                Sign in
+              </Link>{" "}
+              to view your tracked rewards.
+            </p>
+          )}
         </div>
       </section>
 
+      {/* FAQ */}
       <section id="faq" className="border-t border-border/40 py-20">
         <div className="container mx-auto max-w-4xl px-4">
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">FAQ</h2>
           <div className="mt-8 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">When does wallet update?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Wallet updates are done manually by admin after affiliate commissions are confirmed by partner networks.
-                </CardDescription>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">How do I withdraw?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Go to your dashboard, enter UPI ID and amount, then submit a withdrawal request.
-                </CardDescription>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Need help?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Contact support at nileshsankhlakgp@gmail.com
-                </CardDescription>
-              </CardContent>
-            </Card>
+            {[
+              {
+                q: "How much time will it take to track purchase?",
+                a: "usually 48 hrs",
+              },
+              {
+                q: "When the reward became available to redeem?",
+                a: "After the cancelation period over",
+              },
+              {
+                q: "Is there any minimum amount to redeem?",
+                a: "No, You can request for any amount",
+              },
+              {
+                q: "Which methods are available for payouts?",
+                a: "Currently only upi payout option is available for payout",
+              },
+            ].map(({ q, a }) => (
+              <Card key={q}>
+                <CardHeader>
+                  <CardTitle className="text-base">{q}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{a}</CardDescription>
+                </CardContent>
+              </Card>
+            ))}
           </div>
           <div className="mt-10 text-center">
             <Link href="/sign-in" className="text-primary hover:underline">

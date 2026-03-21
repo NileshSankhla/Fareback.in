@@ -16,6 +16,10 @@ export const metadata: Metadata = {
     "Fareback helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
   keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping"],
   authors: [{ name: "Fareback" }],
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
   alternates: {
     canonical: "/",
   },
