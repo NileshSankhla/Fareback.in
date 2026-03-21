@@ -14,7 +14,7 @@ import {
   withdrawalRequestSchema,
 } from "@/lib/validations/auth";
 
-export interface WalletActionState {
+interface WalletActionState {
   error?: string;
   success?: string;
   fieldErrors?: Record<string, string[] | undefined>;
@@ -151,7 +151,7 @@ export const adminAdjustWalletAction = async (
   }
 };
 
-export const adminProcessWithdrawalAction = async (
+const adminProcessWithdrawalAction = async (
   _prevState: WalletActionState,
   formData: FormData,
 ): Promise<WalletActionState> => {

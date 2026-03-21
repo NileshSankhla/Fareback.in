@@ -87,20 +87,6 @@ export const sessions = pgTable("sessions", {
   index("sessions_token_idx").on(table.token),
 ]);
 
-export const passwordResetTokens = pgTable("password_reset_tokens", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => [
-  index("password_reset_tokens_user_id_idx").on(table.userId),
-  index("password_reset_tokens_expires_at_idx").on(table.expiresAt),
-  index("password_reset_tokens_token_idx").on(table.token),
-]);
-
 export const wallets = pgTable("wallets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")

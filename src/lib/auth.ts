@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, scryptSync } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,7 +11,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/session-cookie";
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export interface CurrentUser {
+interface CurrentUser {
   id: number;
   name: string | null;
   email: string;
@@ -22,22 +22,6 @@ export const hashPassword = (password: string) => {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(password, salt, 64).toString("hex");
   return `${salt}:${hash}`;
-};
-
-export const verifyPassword = (password: string, encodedHash: string) => {
-  const [salt, storedHash] = encodedHash.split(":");
-  if (!salt || !storedHash) {
-    return false;
-  }
-
-  const passwordHash = scryptSync(password, salt, 64);
-  const storedHashBuffer = Buffer.from(storedHash, "hex");
-
-  if (storedHashBuffer.length !== passwordHash.length) {
-    return false;
-  }
-
-  return timingSafeEqual(storedHashBuffer, passwordHash);
 };
 
 export const createSession = async (userId: number) => {
