@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import { neon } from "@neondatabase/serverless";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -7,7 +7,7 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const sql = postgres(databaseUrl, { prepare: false });
+const sql = neon(databaseUrl);
 
 // NOTE: Replace the baseUrl values with your actual affiliate tracking URLs.
 // For example:
@@ -113,8 +113,6 @@ const seed = async () => {
   } catch (error) {
     console.error("Merchant seed failed:", error);
     process.exitCode = 1;
-  } finally {
-    await sql.end();
   }
 };
 

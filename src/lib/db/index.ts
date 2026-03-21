@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
 import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL;
@@ -8,17 +8,6 @@ if (!connectionString) {
   throw new Error("DATABASE_URL environment variable is not set.");
 }
 
-// In development, cache the client on globalThis so that Next.js hot-module
-// replacement doesn't create a new postgres connection pool on every reload.
-// In production (Vercel serverless) each function instance is isolated, so
-// max:1 ensures at most one connection is opened per instance.
-const globalForPg = globalThis as typeof globalThis & { _pgClient?: postgres.Sql };
-const _pgClient =
-  globalForPg._pgClient ??
-  postgres(connectionString, { prepare: false, max: 1 });
+const sql = neon(connectionString);
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPg._pgClient = _pgClient;
-}
-
-export const db = drizzle(_pgClient, { schema });
+export const db = drizzle({ client: sql, schema });
