@@ -15,7 +15,7 @@ const Navbar = async () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold">
           <Code2 className="h-6 w-6 text-primary" />
-          <span>CashbackCart</span>
+          <span>Fareback</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">

@@ -8,10 +8,10 @@ const Footer = () => (
         <div className="md:col-span-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <Code2 className="h-6 w-6 text-primary" />
-            <span>CashbackCart</span>
+            <span>Fareback</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            CashbackCart lets users shop via affiliate offers and withdraw
+            Fareback lets users shop via affiliate offers and withdraw
             earnings through UPI requests handled by admin.
           </p>
           <div className="mt-4 flex gap-4">
@@ -87,7 +87,7 @@ const Footer = () => (
 
       <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
         <p>
-          &copy; {new Date().getFullYear()} CashbackCart. All rights reserved.
+          &copy; {new Date().getFullYear()} Fareback. All rights reserved.
         </p>
       </div>
     </div>

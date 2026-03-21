@@ -28,7 +28,7 @@ import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin",
-  description: "CashbackCart admin operations panel.",
+  description: "Fareback admin operations panel.",
 };
 
 const AdminPage = async () => {

@@ -19,7 +19,7 @@ import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Manage your CashbackCart wallet.",
+  description: "Manage your Fareback wallet.",
 };
 
 const DashboardPage = async () => {

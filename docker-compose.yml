@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: my-modern-web-db
+    container_name: fareback-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-my_modern_web}
+      POSTGRES_DB: ${POSTGRES_DB:-fareback}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:

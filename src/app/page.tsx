@@ -25,9 +25,9 @@ const Page = async () => {
     <>
       <section className="border-b border-border/40 py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">CashbackCart</h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Fareback</h1>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Shop on your favorite stores through CashbackCart and earn cashback.
+            Shop on your favorite stores through Fareback and earn cashback.
             We track your eligible clicks and manually update wallet rewards after affiliate commissions are confirmed.
           </p>
         </div>
@@ -107,7 +107,7 @@ const Page = async () => {
                 description: "Create your account and access your wallet section.",
               },
               {
-                title: "2. Shop Through CashbackCart",
+                title: "2. Shop Through Fareback",
                 description: "Click store cards and complete shopping on partner websites.",
               },
               {
@@ -165,7 +165,7 @@ const Page = async () => {
           </div>
           <div className="mt-10 text-center">
             <Link href="/sign-in" className="text-primary hover:underline">
-              Create your CashbackCart account
+              Create your Fareback account
             </Link>
           </div>
         </div>

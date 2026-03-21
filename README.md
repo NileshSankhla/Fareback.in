@@ -1,4 +1,4 @@
-# my-modern-web
+# Fareback
 
 A production-ready, high-performance web foundation built with the best modern tools available.
 
@@ -56,8 +56,8 @@ src/
 ### 1. Clone and install dependencies
 
 ```bash
-git clone https://github.com/NileshSankhla/my-modern-web.git
-cd my-modern-web
+git clone https://github.com/<your-username>/fareback.git
+cd fareback
 bun install
 ```
 
@@ -82,10 +82,10 @@ This project is configured for Google OAuth only (no email/password sign-in).
 8. Application type: **Web application**.
 9. Add Authorized JavaScript origins:
   - `http://localhost:3000`
-  - `https://your-production-domain.com`
+  - `https://fareback.in`
 10. Add Authorized redirect URIs:
   - `http://localhost:3000/api/auth/google/callback`
-  - `https://your-production-domain.com/api/auth/google/callback`
+  - `https://fareback.in/api/auth/google/callback`
 11. Click **Create** and copy **Client ID** and **Client Secret**.
 12. Put them in `.env.local`:
 
@@ -98,7 +98,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 13. For Vercel production, add the same variables in **Project Settings → Environment Variables**:
   - `GOOGLE_CLIENT_ID`
   - `GOOGLE_CLIENT_SECRET`
-  - `NEXT_PUBLIC_APP_URL=https://your-production-domain.com`
+  - `NEXT_PUBLIC_APP_URL=https://fareback.in`
 14. Redeploy after saving variables.
 
 If Google shows `redirect_uri_mismatch`, the URI in Google Console must match exactly, including protocol (`http` vs `https`), domain, and path.

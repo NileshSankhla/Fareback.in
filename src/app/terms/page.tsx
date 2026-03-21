@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms of service for my-modern-web.",
+  description: "Terms of service for Fareback.",
 };
 
 const TermsPage = () => (

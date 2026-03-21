@@ -7,26 +7,30 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://fareback.in"),
   title: {
-    default: "CashbackCart",
-    template: "%s | CashbackCart",
+    default: "Fareback",
+    template: "%s | Fareback",
   },
   description:
-    "CashbackCart helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
+    "Fareback helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
   keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping"],
-  authors: [{ name: "CashbackCart" }],
+  authors: [{ name: "Fareback" }],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "/",
-    title: "CashbackCart",
+    title: "Fareback",
     description:
-      "Shop through CashbackCart partner cards, track eligibility, and request withdrawals to UPI.",
-    siteName: "CashbackCart",
+      "Shop through Fareback partner cards, track eligibility, and request withdrawals to UPI.",
+    siteName: "Fareback",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CashbackCart",
+    title: "Fareback",
     description:
       "Affiliate cashback made simple with manual wallet and withdrawal management.",
   },
