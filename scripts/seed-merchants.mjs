@@ -9,6 +9,11 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl);
 
+const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
+  .split(",")
+  .map((name) => name.trim())
+  .filter(Boolean);
+
 // NOTE: Testing mode: all merchants use homepage URLs and 2% cashback.
 // Replace these baseUrl values with your actual affiliate tracking URLs later.
 // For example:
@@ -67,6 +72,30 @@ const merchantsToSeed = [
   },
 ];
 
+const normalizeName = (name) => name.trim().toLowerCase();
+const requestedNameSet = new Set(requestedMerchantNames.map(normalizeName));
+
+const filteredMerchants =
+  requestedMerchantNames.length === 0
+    ? merchantsToSeed
+    : merchantsToSeed.filter((merchant) => requestedNameSet.has(normalizeName(merchant.name)));
+
+if (requestedMerchantNames.length > 0) {
+  const configuredNames = new Set(merchantsToSeed.map((m) => normalizeName(m.name)));
+  const unknownNames = requestedMerchantNames.filter(
+    (name) => !configuredNames.has(normalizeName(name)),
+  );
+
+  if (unknownNames.length > 0) {
+    console.error(
+      `Unknown merchants in MERCHANT_NAMES: ${unknownNames.join(", ")}. Allowed: ${merchantsToSeed
+        .map((m) => m.name)
+        .join(", ")}`,
+    );
+    process.exit(1);
+  }
+}
+
 const seed = async () => {
   try {
     const [network] = await sql`
@@ -79,7 +108,12 @@ const seed = async () => {
     let insertedCount = 0;
     let updatedCount = 0;
 
-    for (const merchant of merchantsToSeed) {
+    if (filteredMerchants.length === 0) {
+      console.log("No merchants selected. Nothing to seed.");
+      return;
+    }
+
+    for (const merchant of filteredMerchants) {
       const existing = await sql`
         select id
         from merchants
@@ -110,7 +144,9 @@ const seed = async () => {
       insertedCount += 1;
     }
 
-    console.log(`Merchant seed complete. Added ${insertedCount} merchants, updated ${updatedCount} merchants.`);
+    console.log(
+      `Merchant seed complete for ${filteredMerchants.length} merchant(s). Added ${insertedCount} merchants, updated ${updatedCount} merchants.`,
+    );
   } catch (error) {
     console.error("Merchant seed failed:", error);
     process.exitCode = 1;

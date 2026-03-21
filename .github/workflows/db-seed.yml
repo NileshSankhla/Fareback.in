@@ -1,0 +1,32 @@
+name: Seed Neon Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      merchant_names:
+        description: "Optional comma-separated merchant names to seed (example: Amazon,Flipkart). Leave empty to seed all."
+        required: false
+        default: ""
+
+jobs:
+  seed-production:
+    name: Seed Production Database
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Seed database
+        run: bun run db:seed
+        env:
+          # Seed script reads DATABASE_URL; direct Neon URL is fine for this task.
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          MERCHANT_NAMES: ${{ inputs.merchant_names }}
