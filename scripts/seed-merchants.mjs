@@ -9,7 +9,8 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl);
 
-// NOTE: Replace the baseUrl values with your actual affiliate tracking URLs.
+// NOTE: Testing mode: all merchants use homepage URLs and 2% cashback.
+// Replace these baseUrl values with your actual affiliate tracking URLs later.
 // For example:
 //   Amazon Associates: https://www.amazon.in?tag=YOUR_TAG-21
 //   Flipkart Affiliate: https://www.flipkart.com?affid=YOUR_AFFID&affExtParam1=YOUR_PARAM
@@ -19,49 +20,49 @@ const merchantsToSeed = [
   {
     name: "Amazon",
     baseUrl: "https://www.amazon.in",
-    cashbackRate: "Up to 8%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=amazon.in&sz=64",
   },
   {
     name: "Flipkart",
     baseUrl: "https://www.flipkart.com",
-    cashbackRate: "Up to 6%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=64",
   },
   {
     name: "Myntra",
     baseUrl: "https://www.myntra.com",
-    cashbackRate: "Up to 10%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=myntra.com&sz=64",
   },
   {
     name: "Nykaa",
     baseUrl: "https://www.nykaa.com",
-    cashbackRate: "Up to 7%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=nykaa.com&sz=64",
   },
   {
     name: "Meesho",
     baseUrl: "https://www.meesho.com",
-    cashbackRate: "Up to 5%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=meesho.com&sz=64",
   },
   {
     name: "AJIO",
     baseUrl: "https://www.ajio.com",
-    cashbackRate: "Up to 9%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=ajio.com&sz=64",
   },
   {
     name: "Tata CLiQ",
     baseUrl: "https://www.tatacliq.com",
-    cashbackRate: "Up to 6%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=tatacliq.com&sz=64",
   },
   {
     name: "Snapdeal",
     baseUrl: "https://www.snapdeal.com",
-    cashbackRate: "Up to 5%",
+    cashbackRate: "2%",
     logoUrl: "https://www.google.com/s2/favicons?domain=snapdeal.com&sz=64",
   },
 ];

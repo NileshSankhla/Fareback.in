@@ -10,6 +10,8 @@ import {
 import { db } from "@/lib/db";
 import { merchants } from "@/lib/db/schema";
 
+const TEST_CASHBACK_RATE = "2%";
+
 const Page = async () => {
   let merchantList: (typeof merchants.$inferSelect)[] = [];
 
@@ -53,7 +55,7 @@ const Page = async () => {
                   key={merchant.id}
                   href={`/api/redirect?merchantId=${merchant.id}`}
                   className="block"
-                  aria-label={`Shop at ${merchant.name} and earn ${merchant.cashbackRate} cashback`}
+                  aria-label={`Shop at ${merchant.name} and earn ${TEST_CASHBACK_RATE} cashback`}
                 >
                   <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-all hover:shadow-md hover:scale-105">
                     <CardHeader className="items-center pb-2">
@@ -75,7 +77,7 @@ const Page = async () => {
                     </CardHeader>
                     <CardContent className="text-center">
                       <CardDescription className="font-medium text-primary">
-                        {merchant.cashbackRate}
+                        {TEST_CASHBACK_RATE}
                       </CardDescription>
                       <CardDescription className="mt-1 text-xs">cashback</CardDescription>
                     </CardContent>

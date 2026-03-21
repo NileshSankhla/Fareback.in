@@ -5,6 +5,17 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
+const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
+  amazon: "https://www.amazon.in",
+  flipkart: "https://www.flipkart.com",
+  myntra: "https://www.myntra.com",
+  nykaa: "https://www.nykaa.com",
+  meesho: "https://www.meesho.com",
+  ajio: "https://www.ajio.com",
+  "tata cliq": "https://www.tatacliq.com",
+  snapdeal: "https://www.snapdeal.com",
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -23,11 +34,6 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await getCurrentUser();
-    if (!user) {
-      const signInUrl = new URL("/sign-in", request.url);
-      signInUrl.searchParams.set("redirect", `/api/redirect?merchantId=${merchantId}`);
-      return NextResponse.redirect(signInUrl);
-    }
 
     const [merchant] = await db
       .select()
@@ -41,7 +47,9 @@ export async function GET(request: NextRequest) {
 
     let destinationUrl: URL;
     try {
-      destinationUrl = new URL(merchant.baseUrl);
+      const merchantNameKey = merchant.name.trim().toLowerCase();
+      const testingHomepage = TEST_MERCHANT_HOMEPAGES[merchantNameKey];
+      destinationUrl = new URL(testingHomepage ?? merchant.baseUrl);
     } catch {
       return NextResponse.json(
         { error: "Invalid merchant URL" },
@@ -49,12 +57,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const [click] = await db
-      .insert(clicks)
-      .values({ userId: user.id, merchantId })
-      .returning({ id: clicks.id });
-
-    destinationUrl.searchParams.set("subid", click.id);
+    if (user) {
+      await db
+        .insert(clicks)
+        .values({ userId: user.id, merchantId })
+        .returning({ id: clicks.id });
+    }
 
     redirect(destinationUrl.toString());
   } catch (error) {
