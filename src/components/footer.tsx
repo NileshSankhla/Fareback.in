@@ -16,7 +16,7 @@ const Footer = () => (
           </p>
           <div className="mt-4 flex gap-4">
             <Link
-              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://instagram.com"}
+              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/fareback.in/"}
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
