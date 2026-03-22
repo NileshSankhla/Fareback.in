@@ -16,10 +16,6 @@ export const metadata: Metadata = {
     "Fareback helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
   keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping"],
   authors: [{ name: "Fareback" }],
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-  },
   alternates: {
     canonical: "/",
   },
@@ -39,9 +35,31 @@ export const metadata: Metadata = {
       "Affiliate cashback made simple with manual wallet and withdrawal management.",
   },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: "/icon.svg",
-    shortcut: "/icon.svg",
+    icon: [
+      {
+        url: "/favicon-black.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-white.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    apple: "/favicon-black.svg",
+    shortcut: [
+      {
+        url: "/favicon-black.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-white.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
   },
 };
 
