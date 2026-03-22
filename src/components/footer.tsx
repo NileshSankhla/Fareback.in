@@ -10,24 +10,24 @@ const Footer = () => (
             <Code2 className="h-6 w-6 text-primary" />
             <span>Fareback</span>
           </Link>
-          <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            Fareback lets users shop via affiliate offers and withdraw
-            earnings through UPI requests handled by admin.
+          <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
+            India&apos;s trusted cashback platform. Shop from top brands,
+            earn guaranteed rewards, and withdraw instantly via UPI.
           </p>
-          <div className="mt-4 flex gap-4">
+          <div className="mt-6 flex gap-4">
             <Link
               href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/fareback.in/"}
-              aria-label="Instagram"
+              aria-label="Follow us on Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="text-muted-foreground transition-colors hover:text-primary"
             >
               <Instagram className="h-5 w-5" />
             </Link>
             <a
               href="mailto:support@fareback.in"
-              aria-label="Support"
-              className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground text-sm"
+              aria-label="Email Support"
+              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary text-sm"
             >
               <Mail className="h-5 w-5" />
               <span>Support</span>
@@ -36,14 +36,14 @@ const Footer = () => (
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Product</h3>
-          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <h3 className="text-sm font-semibold mb-4">Platform</h3>
+          <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
               <Link
                 href="#offers"
                 className="transition-colors hover:text-foreground"
               >
-                Offers
+                Cashback Offers
               </Link>
             </li>
             <li>
@@ -56,8 +56,16 @@ const Footer = () => (
             </li>
             <li>
               <Link
-                href="/sign-in"
+                href="#faq"
                 className="transition-colors hover:text-foreground"
+              >
+                FAQs
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/sign-in"
+                className="transition-colors hover:text-foreground font-medium"
               >
                 Get Started
               </Link>
@@ -66,8 +74,8 @@ const Footer = () => (
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Legal</h3>
-          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <h3 className="text-sm font-semibold mb-4">Legal</h3>
+          <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
               <Link
                 href="/privacy"
@@ -84,14 +92,19 @@ const Footer = () => (
                 Terms of Service
               </Link>
             </li>
+            <li>
+              <Link
+                href="/affiliate-rates"
+                className="transition-colors hover:text-foreground"
+              >
+                Affiliate Rates
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
 
       <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
-        <p className="mb-2 text-xs">
-          *Affiliate rate: Cashback percentages shown are based on affiliate commission rates and may vary. Actual cashback credited to your wallet may differ.
-        </p>
         <p>
           &copy; {new Date().getFullYear()} Fareback. All rights reserved.
         </p>
