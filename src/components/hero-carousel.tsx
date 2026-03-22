@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type TouchEvent } from "react";
 import { ArrowRight } from "lucide-react";
 
 interface HeroCarouselProps {
@@ -11,7 +11,7 @@ const HeroCarousel = ({ favoritePlatform }: HeroCarouselProps) => {
   const slides = [
     {
       title: "Create Your Free Account",
-      description: "Sign in with Google to get started instantly. No credit card required.",
+      description: "Sign in with Google to get started.",
     },
     {
       title: "Choose Your Favorite Store",
@@ -27,11 +27,12 @@ const HeroCarousel = ({ favoritePlatform }: HeroCarouselProps) => {
     },
     {
       title: "Withdraw Your Earnings",
-      description: "Once the cancellation period ends, request instant UPI payout for any amount from your wallet.",
+      description: "You can request Earned Amount after 30 Days of Purchase",
     },
   ];
 
   const [current, setCurrent] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
@@ -42,9 +43,29 @@ const HeroCarousel = ({ favoritePlatform }: HeroCarouselProps) => {
   }, [slides.length]);
 
   useEffect(() => {
-    const interval = setInterval(next, 5000);
+    const interval = setInterval(next, 8000);
     return () => clearInterval(interval);
   }, [next]);
+
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    setTouchStartX(event.changedTouches[0]?.clientX ?? null);
+  };
+
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX === null) return;
+
+    const touchEndX = event.changedTouches[0]?.clientX ?? touchStartX;
+    const delta = touchStartX - touchEndX;
+    const swipeThreshold = 40;
+
+    if (delta > swipeThreshold) {
+      next();
+    } else if (delta < -swipeThreshold) {
+      prev();
+    }
+
+    setTouchStartX(null);
+  };
 
   return (
     <section id="how-it-works" className="border-b border-border/40 bg-gradient-to-b from-muted/40 to-muted/20 py-20">
@@ -53,7 +74,11 @@ const HeroCarousel = ({ favoritePlatform }: HeroCarouselProps) => {
           <h2 className="mb-12 text-center text-3xl font-bold tracking-tight sm:text-4xl">
             How Fareback Works
           </h2>
-          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl">
+          <div
+            className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
             <div className="px-8 py-12 sm:px-12">
               <div className="mb-6 inline-flex items-center justify-center rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
                 Step {current + 1} of {slides.length}
@@ -80,7 +105,7 @@ const HeroCarousel = ({ favoritePlatform }: HeroCarouselProps) => {
                     />
                   ))}
                 </div>
-                <div className="flex gap-2">
+                <div className="hidden gap-2 sm:flex">
                   <button
                     onClick={prev}
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition-all hover:bg-accent hover:scale-105"

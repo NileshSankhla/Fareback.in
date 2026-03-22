@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -47,9 +46,6 @@ const DashboardPage = async () => {
         <Card>
           <CardHeader>
             <CardTitle>Dashboard</CardTitle>
-            <CardDescription>
-              You are authenticated and connected to your database-backed session.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">

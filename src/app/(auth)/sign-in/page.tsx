@@ -19,7 +19,7 @@ interface SignInPageProps {
 
 const SignInPage = async ({ searchParams }: SignInPageProps) => {
   const params = await searchParams;
-  const redirectTo = params.redirect?.trim() || "/dashboard";
+  const redirectTo = params.redirect?.trim() || "/";
   const googleError = params.error?.trim() || null;
 
   return (

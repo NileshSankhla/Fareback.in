@@ -8,7 +8,7 @@ const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 const getSafeRedirectPath = (redirectTo: string) => {
   if (!redirectTo.startsWith("/") || redirectTo.startsWith("//")) {
-    return "/dashboard";
+    return "/";
   }
 
   return redirectTo;
@@ -17,7 +17,7 @@ const getSafeRedirectPath = (redirectTo: string) => {
 export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = request.nextUrl.origin;
-  const requestedRedirect = request.nextUrl.searchParams.get("redirect") ?? "/dashboard";
+  const requestedRedirect = request.nextUrl.searchParams.get("redirect") ?? "/";
   const redirectTo = getSafeRedirectPath(requestedRedirect);
 
   if (!clientId) {

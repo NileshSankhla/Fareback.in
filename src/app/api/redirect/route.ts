@@ -5,15 +5,14 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
-  amazon: "https://www.amazon.in",
+  amazon:
+    "https://www.amazon.in?&linkCode=ll2&tag=fareback-21&linkId=711b78face92a1bf8be6139d25b1f780&ref_=as_li_ss_tl",
   flipkart: "https://www.flipkart.com",
   myntra: "https://www.myntra.com",
-  nykaa: "https://www.nykaa.com",
-  meesho: "https://www.meesho.com",
   ajio: "https://www.ajio.com",
-  "tata cliq": "https://www.tatacliq.com",
-  snapdeal: "https://www.snapdeal.com",
 };
+
+const SUPPORTED_MERCHANTS = new Set(Object.keys(TEST_MERCHANT_HOMEPAGES));
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,6 +46,13 @@ export async function GET(request: NextRequest) {
     let destinationUrl: URL;
     try {
       const merchantNameKey = merchant.name.trim().toLowerCase();
+      if (!SUPPORTED_MERCHANTS.has(merchantNameKey)) {
+        return NextResponse.json(
+          { error: "Merchant is not currently supported" },
+          { status: 404 },
+        );
+      }
+
       const testingHomepage = TEST_MERCHANT_HOMEPAGES[merchantNameKey];
       destinationUrl = new URL(testingHomepage ?? merchant.baseUrl);
     } catch {

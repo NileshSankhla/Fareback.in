@@ -1,18 +1,35 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Code2, Instagram, Mail } from "lucide-react";
+import { Instagram, Mail } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 
-const Footer = () => (
+const Footer = async () => {
+  const user = await getCurrentUser();
+
+  return (
   <footer className="border-t border-border/40 bg-background">
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-2">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <Code2 className="h-6 w-6 text-primary" />
-            <span>Fareback</span>
+          <Link href="/" className="flex items-center transition-opacity hover:opacity-80" aria-label="Fareback home">
+            <Image
+              src="/brand-name-dark.svg"
+              alt="Fareback"
+              width={164}
+              height={64}
+              className="h-9 w-auto dark:hidden"
+            />
+            <Image
+              src="/brand-name-light.svg"
+              alt="Fareback"
+              width={164}
+              height={64}
+              className="hidden h-9 w-auto dark:block"
+            />
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
             India&apos;s trusted cashback platform. Shop from top brands,
-            earn guaranteed rewards, and withdraw instantly via UPI.
+            earn guaranteed rewards, and withdraw via UPI.
           </p>
           <div className="mt-6 flex gap-4">
             <Link
@@ -64,7 +81,7 @@ const Footer = () => (
             </li>
             <li>
               <Link
-                href="/sign-in"
+                href={user ? "/#offers" : "/sign-in"}
                 className="transition-colors hover:text-foreground font-medium"
               >
                 Get Started
@@ -111,6 +128,7 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 export default Footer;

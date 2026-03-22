@@ -26,7 +26,7 @@ const TrackedHistory = ({ items }: TrackedHistoryProps) => {
   if (approvedItems.length === 0) {
     return (
       <p className="text-center text-muted-foreground">
-        No tracked rewards yet. Rewards appear here after admin approval.
+        No tracked rewards yet.
       </p>
     );
   }

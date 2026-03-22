@@ -15,7 +15,7 @@ const GOOGLE_OAUTH_REDIRECT_COOKIE = "google_oauth_redirect";
 
 const getSafeRedirectPath = (redirectTo: string) => {
   if (!redirectTo.startsWith("/") || redirectTo.startsWith("//")) {
-    return "/dashboard";
+    return "/";
   }
 
   return redirectTo;
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   const storedRedirect = cookieStore.get(GOOGLE_OAUTH_REDIRECT_COOKIE)?.value;
   cookieStore.delete(GOOGLE_OAUTH_STATE_COOKIE);
   cookieStore.delete(GOOGLE_OAUTH_REDIRECT_COOKIE);
-  const redirectPath = getSafeRedirectPath(storedRedirect ?? "/dashboard");
+  const redirectPath = getSafeRedirectPath(storedRedirect ?? "/");
 
   if (!storedState || storedState !== state) {
     return NextResponse.redirect(

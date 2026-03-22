@@ -14,7 +14,7 @@ const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
   .map((name) => name.trim())
   .filter(Boolean);
 
-// NOTE: Testing mode: all merchants use homepage URLs and 2% cashback.
+// NOTE: Testing mode: supported merchants use configured URLs and 3.7% cashback.
 // Replace these baseUrl values with your actual affiliate tracking URLs later.
 // For example:
 //   Amazon Associates: https://www.amazon.in?tag=YOUR_TAG-21
@@ -24,51 +24,28 @@ const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
 const merchantsToSeed = [
   {
     name: "Amazon",
-    baseUrl: "https://www.amazon.in",
-    cashbackRate: "2%",
+    baseUrl:
+      "https://www.amazon.in?&linkCode=ll2&tag=fareback-21&linkId=711b78face92a1bf8be6139d25b1f780&ref_=as_li_ss_tl",
+    cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=amazon.in&sz=64",
   },
   {
     name: "Flipkart",
     baseUrl: "https://www.flipkart.com",
-    cashbackRate: "2%",
+    cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=64",
   },
   {
     name: "Myntra",
     baseUrl: "https://www.myntra.com",
-    cashbackRate: "2%",
+    cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=myntra.com&sz=64",
-  },
-  {
-    name: "Nykaa",
-    baseUrl: "https://www.nykaa.com",
-    cashbackRate: "2%",
-    logoUrl: "https://www.google.com/s2/favicons?domain=nykaa.com&sz=64",
-  },
-  {
-    name: "Meesho",
-    baseUrl: "https://www.meesho.com",
-    cashbackRate: "2%",
-    logoUrl: "https://www.google.com/s2/favicons?domain=meesho.com&sz=64",
   },
   {
     name: "AJIO",
     baseUrl: "https://www.ajio.com",
-    cashbackRate: "2%",
+    cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=ajio.com&sz=64",
-  },
-  {
-    name: "Tata CLiQ",
-    baseUrl: "https://www.tatacliq.com",
-    cashbackRate: "2%",
-    logoUrl: "https://www.google.com/s2/favicons?domain=tatacliq.com&sz=64",
-  },
-  {
-    name: "Snapdeal",
-    baseUrl: "https://www.snapdeal.com",
-    cashbackRate: "2%",
-    logoUrl: "https://www.google.com/s2/favicons?domain=snapdeal.com&sz=64",
   },
 ];
 

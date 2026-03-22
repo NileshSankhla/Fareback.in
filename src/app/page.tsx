@@ -55,9 +55,13 @@ const Page = async () => {
     console.error("Failed to fetch merchants:", error);
   }
 
+  const supportedMerchantNames = new Set(["amazon", "flipkart", "myntra", "ajio"]);
+  const visibleMerchantList = merchantList.filter((merchant) =>
+    supportedMerchantNames.has(merchant.name.trim().toLowerCase()),
+  );
   const favoritePlatform = await getFavoritePlatform(
     user?.id ?? null,
-    merchantList,
+    visibleMerchantList,
   );
 
   let trackedItems: TrackedHistoryItem[] = [];
@@ -96,14 +100,14 @@ const Page = async () => {
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
               Shop from India&apos;s top brands and earn guaranteed cashback.
-              Track every purchase, withdraw instantly via UPI, and save more on what you love.
+              Track every purchase, withdraw via UPI, and save more on what you love.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Link
-                href="/sign-in"
+                href={user ? "/#offers" : "/sign-in"}
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
               >
-                Get Started Free
+                {user ? "Shop Merchants" : "Get Started Free"}
               </Link>
               <Link
                 href="#how-it-works"
@@ -127,11 +131,11 @@ const Page = async () => {
               Our Cashback Partners
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Shop from India&apos;s leading brands and earn instant cashback. Your favorite stores, now more rewarding.
+              Shop from India&apos;s leading brands and earn cashback. Your favorite stores, now more rewarding.
             </p>
           </div>
 
-          {merchantList.length === 0 ? (
+          {visibleMerchantList.length === 0 ? (
             <div className="text-center">
               <p className="text-muted-foreground text-lg">
                 We&apos;re partnering with top brands. Check back soon!
@@ -139,7 +143,7 @@ const Page = async () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {merchantList.map((merchant) => (
+              {visibleMerchantList.map((merchant) => (
                 <a
                   key={merchant.id}
                   href={`/api/redirect?merchantId=${merchant.id}`}
@@ -166,7 +170,7 @@ const Page = async () => {
                     </CardHeader>
                     <CardContent className="text-center">
                       <CardDescription className="font-semibold text-primary text-sm">
-                        Up to {merchant.cashbackRate} Cashback
+                        Upto 3.7% cashback*
                       </CardDescription>
                     </CardContent>
                   </Card>
@@ -225,7 +229,7 @@ const Page = async () => {
               },
               {
                 q: "When can I withdraw my cashback rewards?",
-                a: "Rewards become available for withdrawal after the merchant's cancellation period expires, typically 7-30 days depending on the store's policy.",
+                a: "Rewards become available for withdrawal after 30 Days of purchase",
               },
               {
                 q: "Is there a minimum withdrawal amount?",
@@ -233,7 +237,7 @@ const Page = async () => {
               },
               {
                 q: "What payment methods are supported for withdrawals?",
-                a: "Currently, we support instant UPI payouts for quick and secure transfers directly to your bank account.",
+                a: "Currently, we support UPI payouts for quick and secure transfers directly to your bank account.",
               },
               {
                 q: "How do I ensure my purchase is tracked correctly?",
@@ -253,10 +257,10 @@ const Page = async () => {
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Ready to start earning cashback?</p>
             <Link
-              href="/sign-in"
+              href={user ? "/#offers" : "/sign-in"}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
             >
-              Create Your Account
+              {user ? "Shop Now" : "Create Your Account"}
             </Link>
           </div>
         </div>

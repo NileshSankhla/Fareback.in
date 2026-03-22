@@ -6,6 +6,7 @@ import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
 import ThemeSwitcher from "./theme-switcher";
 import { Button } from "./ui/button";
 import { Wallet } from "lucide-react";
+import DashboardToggleButton from "./dashboard-toggle-button";
 
 const Navbar = async () => {
   const user = await getCurrentUser();
@@ -68,9 +69,7 @@ const Navbar = async () => {
                   <span>{formatPaiseAsINR(wallet?.balanceInPaise ?? 0)}</span>
                 </div>
               )}
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
+              <DashboardToggleButton />
               {user.isAdmin ? (
                 <Button variant="secondary" size="sm" asChild>
                   <Link href="/admin">Admin</Link>
