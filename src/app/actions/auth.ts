@@ -16,9 +16,9 @@ export const signOutAction = async () => {
     }
 
     await clearSessionCookie();
-    redirect("/");
   } catch (error) {
     console.error("Sign out error:", error);
-    redirect("/");
   }
+
+  redirect("/");
 };

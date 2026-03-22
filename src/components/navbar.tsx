@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Code2 } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
@@ -13,9 +13,27 @@ const Navbar = async () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-          <Code2 className="h-6 w-6 text-primary" />
-          <span>Fareback</span>
+        <Link
+          href="/"
+          className="flex items-center"
+          aria-label="Fareback home"
+        >
+          <Image
+            src="/brand-name-dark.svg"
+            alt="Fareback"
+            width={164}
+            height={64}
+            className="h-9 w-auto dark:hidden"
+            priority
+          />
+          <Image
+            src="/brand-name-light.svg"
+            alt="Fareback"
+            width={164}
+            height={64}
+            className="hidden h-9 w-auto dark:block"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">

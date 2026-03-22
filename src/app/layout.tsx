@@ -38,6 +38,11 @@ export const metadata: Metadata = {
     description:
       "Affiliate cashback made simple with manual wallet and withdrawal management.",
   },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: "/icon.svg",
+    shortcut: "/icon.svg",
+  },
 };
 
 const RootLayout = ({
