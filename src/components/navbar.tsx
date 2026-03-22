@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
 import ThemeSwitcher from "./theme-switcher";
 import { Button } from "./ui/button";
+import { Wallet } from "lucide-react";
 
 const Navbar = async () => {
   const user = await getCurrentUser();
@@ -15,7 +16,7 @@ const Navbar = async () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
           href="/"
-          className="flex items-center"
+          className="flex items-center transition-opacity hover:opacity-80"
           aria-label="Fareback home"
         >
           <Image
@@ -38,19 +39,19 @@ const Navbar = async () => {
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link
-            href="#offers"
+            href="/#offers"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Offers
           </Link>
           <Link
-            href="#how-it-works"
+            href="/#how-it-works"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             How It Works
           </Link>
           <Link
-            href="#faq"
+            href="/#faq"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             FAQ
@@ -61,9 +62,12 @@ const Navbar = async () => {
           <ThemeSwitcher />
           {user ? (
             <>
-              <span className="hidden text-xs text-muted-foreground md:inline">
-                Wallet: {formatPaiseAsINR(wallet?.balanceInPaise ?? 0)}
-              </span>
+              {wallet && (
+                <div className="hidden items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-semibold md:flex">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <span>{formatPaiseAsINR(wallet?.balanceInPaise ?? 0)}</span>
+                </div>
+              )}
               <Button variant="outline" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
@@ -73,15 +77,15 @@ const Navbar = async () => {
                 </Button>
               ) : null}
               <form action={signOutAction}>
-                <Button size="sm" type="submit">
+                <Button size="sm" type="submit" variant="ghost">
                   Sign Out
                 </Button>
               </form>
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/sign-in">SignUp/SignIn</Link>
+              <Button variant="default" size="sm" asChild>
+                <Link href="/sign-in">Get Started</Link>
               </Button>
             </>
           )}

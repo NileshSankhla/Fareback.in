@@ -87,13 +87,32 @@ const Page = async () => {
   return (
     <>
       {/* Hero */}
-      <section className="border-b border-border/40 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Fareback</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Shop on your favorite stores through Fareback and earn cashback.
-            We track your eligible clicks and manually update wallet rewards after affiliate commissions are confirmed.
-          </p>
+      <section className="relative border-b border-border/40 py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+        <div className="container relative mx-auto px-4 text-center">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Maximize Your Savings with Every Purchase
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Shop from India&apos;s top brands and earn guaranteed cashback.
+              Track every purchase, withdraw instantly via UPI, and save more on what you love.
+            </p>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                href="/sign-in"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
+              >
+                Get Started Free
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-8 py-3.5 text-base font-semibold transition-all hover:bg-accent hover:scale-105"
+              >
+                See How It Works
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -105,47 +124,49 @@ const Page = async () => {
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Cashback Partners
+              Our Cashback Partners
             </h2>
-            <p className="mt-4 text-muted-foreground">
-              Shop through our partners and earn cashback on every purchase.
+            <p className="mt-4 text-lg text-muted-foreground">
+              Shop from India&apos;s leading brands and earn instant cashback. Your favorite stores, now more rewarding.
             </p>
           </div>
 
           {merchantList.length === 0 ? (
-            <p className="text-center text-muted-foreground">
-              No merchants available yet. Check back soon!
-            </p>
+            <div className="text-center">
+              <p className="text-muted-foreground text-lg">
+                We&apos;re partnering with top brands. Check back soon!
+              </p>
+            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {merchantList.map((merchant) => (
                 <a
                   key={merchant.id}
                   href={`/api/redirect?merchantId=${merchant.id}`}
-                  className="block"
+                  className="group block"
                   aria-label={`Shop at ${merchant.name} and earn up to ${merchant.cashbackRate} cashback`}
                 >
-                  <Card className="border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-lg">
+                  <Card className="h-full border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary/40">
                     <CardHeader className="items-center pb-2">
                       {merchant.logoUrl ? (
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-1">
+                        <div className="mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-2 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
                           <Image
                             src={merchant.logoUrl}
                             alt={`${merchant.name} logo`}
-                            width={40}
-                            height={40}
+                            width={48}
+                            height={48}
                             className="object-contain"
                             unoptimized
                           />
                         </div>
                       ) : null}
-                      <CardTitle className="text-center text-base">
+                      <CardTitle className="text-center text-base font-semibold">
                         {merchant.name}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
-                      <CardDescription className="font-medium text-primary">
-                        up to {merchant.cashbackRate} cashback*
+                      <CardDescription className="font-semibold text-primary text-sm">
+                        Up to {merchant.cashbackRate} Cashback
                       </CardDescription>
                     </CardContent>
                   </Card>
@@ -157,65 +178,85 @@ const Page = async () => {
       </section>
 
       {/* Tracked History */}
-      <section id="tracked-history" className="border-b border-border/40 py-20">
+      <section id="tracked-history" className="border-b border-border/40 py-20 bg-muted/20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Tracked History
+              Your Earning History
             </h2>
-            <p className="mt-4 text-muted-foreground">
-              Your cashback rewards tracked and approved by admin.
+            <p className="mt-4 text-lg text-muted-foreground">
+              Track all your cashback rewards and approved transactions in one place.
             </p>
           </div>
           {user ? (
             <TrackedHistory items={trackedItems} />
           ) : (
-            <p className="text-center text-muted-foreground">
-              <Link href="/sign-in" className="text-primary hover:underline">
-                Sign in
-              </Link>{" "}
-              to view your tracked rewards.
-            </p>
+            <div className="text-center">
+              <p className="text-muted-foreground text-lg mb-6">
+                Sign in to view your complete cashback history and track your earnings.
+              </p>
+              <Link
+                href="/sign-in"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+              >
+                Sign In to Continue
+              </Link>
+            </div>
           )}
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="border-t border-border/40 py-20">
+      <section id="faq" className="py-20">
         <div className="container mx-auto max-w-4xl px-4">
-          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">FAQ</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Everything you need to know about earning cashback with Fareback
+            </p>
+          </div>
           <div className="mt-8 space-y-4">
             {[
               {
-                q: "How much time will it take to track purchase?",
-                a: "usually 48 hrs",
+                q: "How long does it take to track my purchase?",
+                a: "Purchases are typically tracked within 48 hours of completion. You'll see the transaction appear in your earning history once confirmed.",
               },
               {
-                q: "When the reward became available to redeem?",
-                a: "After the cancelation period over",
+                q: "When can I withdraw my cashback rewards?",
+                a: "Rewards become available for withdrawal after the merchant's cancellation period expires, typically 7-30 days depending on the store's policy.",
               },
               {
-                q: "Is there any minimum amount to redeem?",
-                a: "No, You can request for any amount",
+                q: "Is there a minimum withdrawal amount?",
+                a: "No minimum required. You can request withdrawal for any amount available in your wallet, making it convenient to access your earnings anytime.",
               },
               {
-                q: "Which methods are available for payouts?",
-                a: "Currently only upi payout option is available for payout",
+                q: "What payment methods are supported for withdrawals?",
+                a: "Currently, we support instant UPI payouts for quick and secure transfers directly to your bank account.",
+              },
+              {
+                q: "How do I ensure my purchase is tracked correctly?",
+                a: "Start with an empty cart, click through from Fareback to the merchant site, and complete your purchase in the same session without using external coupons.",
               },
             ].map(({ q, a }) => (
-              <Card key={q}>
+              <Card key={q} className="border-border/60 transition-all duration-200 hover:shadow-md hover:border-primary/30">
                 <CardHeader>
-                  <CardTitle className="text-base">{q}</CardTitle>
+                  <CardTitle className="text-lg font-semibold">{q}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{a}</CardDescription>
+                  <CardDescription className="text-base leading-relaxed">{a}</CardDescription>
                 </CardContent>
               </Card>
             ))}
           </div>
-          <div className="mt-10 text-center">
-            <Link href="/sign-in" className="text-primary hover:underline">
-              Create your Fareback account
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4">Ready to start earning cashback?</p>
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+            >
+              Create Your Account
             </Link>
           </div>
         </div>
