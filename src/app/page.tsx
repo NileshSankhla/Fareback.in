@@ -13,6 +13,7 @@ import { clicks, merchants, walletTransactions } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
+import SmoothScrollLink from "@/components/smooth-scroll-link";
 
 async function getFavoritePlatform(
   userId: number | null,
@@ -103,12 +104,21 @@ const Page = async () => {
               Track every purchase, withdraw via UPI, and save more on what you love.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href={user ? "/#offers" : "/sign-in"}
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
-              >
-                {user ? "Shop Merchants" : "Get Started Free"}
-              </Link>
+              {user ? (
+                <SmoothScrollLink
+                  href="#offers"
+                  className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
+                >
+                  Shop Now
+                </SmoothScrollLink>
+              ) : (
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
+                >
+                  Get Started Free
+                </Link>
+              )}
               <Link
                 href="#how-it-works"
                 className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-8 py-3.5 text-base font-semibold transition-all hover:bg-accent hover:scale-105"
@@ -146,7 +156,7 @@ const Page = async () => {
               {visibleMerchantList.map((merchant) => (
                 <a
                   key={merchant.id}
-                  href={`/api/redirect?merchantId=${merchant.id}`}
+                  href={`/merchants?merchantId=${merchant.id}`}
                   className="group block"
                   aria-label={`Shop at ${merchant.name} and earn up to ${merchant.cashbackRate} cashback`}
                 >
@@ -256,12 +266,21 @@ const Page = async () => {
           </div>
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Ready to start earning cashback?</p>
-            <Link
-              href={user ? "/#offers" : "/sign-in"}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
-            >
-              {user ? "Shop Now" : "Create Your Account"}
-            </Link>
+            {user ? (
+              <SmoothScrollLink
+                href="#offers"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+              >
+                Shop Now
+              </SmoothScrollLink>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+              >
+                Create Your Account
+              </Link>
+            )}
           </div>
         </div>
       </section>

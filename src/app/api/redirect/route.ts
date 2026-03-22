@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { clicks, merchants } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,6 +13,13 @@ const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
 };
 
 const SUPPORTED_MERCHANTS = new Set(Object.keys(TEST_MERCHANT_HOMEPAGES));
+
+const appendSubidParam = (urlString: string, subid: string): string => {
+  const url = new URL(urlString);
+  // Append subid parameter without damaging existing parameters
+  url.searchParams.append("subid", subid);
+  return url.toString();
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +38,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid merchantId" }, { status: 400 });
     }
 
-    const user = await getCurrentUser();
+    // Require user to be logged in
+    const user = await requireUser();
 
     const [merchant] = await db
       .select()
@@ -42,6 +50,12 @@ export async function GET(request: NextRequest) {
     if (!merchant) {
       return NextResponse.json({ error: "Merchant not found" }, { status: 404 });
     }
+
+    // Create click record
+    await db
+      .insert(clicks)
+      .values({ userId: user.id, merchantId })
+      .returning({ id: clicks.id });
 
     let destinationUrl: URL;
     try {
@@ -54,19 +68,18 @@ export async function GET(request: NextRequest) {
       }
 
       const testingHomepage = TEST_MERCHANT_HOMEPAGES[merchantNameKey];
-      destinationUrl = new URL(testingHomepage ?? merchant.baseUrl);
+      let baseUrl = testingHomepage ?? merchant.baseUrl;
+
+      // Append username as subid parameter for tracking
+      const subid = user.name || user.email.split("@")[0];
+      baseUrl = appendSubidParam(baseUrl, subid);
+
+      destinationUrl = new URL(baseUrl);
     } catch {
       return NextResponse.json(
         { error: "Invalid merchant URL" },
         { status: 500 },
       );
-    }
-
-    if (user) {
-      await db
-        .insert(clicks)
-        .values({ userId: user.id, merchantId })
-        .returning({ id: clicks.id });
     }
 
     return NextResponse.redirect(destinationUrl.toString(), { status: 307 });
