@@ -15,6 +15,13 @@ import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 import SmoothScrollLink from "@/components/smooth-scroll-link";
 
+type ClickTrackingStatus = "unreviewed" | "tracked" | "approved";
+
+const isTrackedOrApproved = <T extends { trackingStatus: ClickTrackingStatus }>(
+  click: T,
+): click is T & { trackingStatus: "tracked" | "approved" } =>
+  click.trackingStatus === "tracked" || click.trackingStatus === "approved";
+
 async function getFavoritePlatform(
   userId: number | null,
   merchantList: { id: number; name: string }[],
@@ -72,7 +79,7 @@ const Page = async () => {
         id: string;
         clickDate: Date;
         merchantName: string;
-        trackingStatus: "unreviewed" | "tracked" | "approved";
+        trackingStatus: ClickTrackingStatus;
         rewardAmount: number;
       }> = [];
 
@@ -113,7 +120,7 @@ const Page = async () => {
       }
 
       trackedItems = userClicks
-        .filter((click) => click.trackingStatus === "tracked" || click.trackingStatus === "approved")
+        .filter(isTrackedOrApproved)
         .map((click) => ({
           id: click.id,
           merchantName: click.merchantName,
