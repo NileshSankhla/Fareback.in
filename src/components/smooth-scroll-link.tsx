@@ -8,20 +8,20 @@ interface SmoothScrollLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorEle
   className?: string;
 }
 
-const smoothScrollTo = (element: HTMLElement, duration: number = 1500) => {
+const smoothScrollTo = (element: HTMLElement, duration: number) => {
   const targetPosition = element.getBoundingClientRect().top + window.scrollY;
   const startPosition = window.scrollY;
   const distance = targetPosition - startPosition;
   const startTime = performance.now();
 
-  const easeInOutQuad = (t: number): number => {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  const easeOutCubic = (t: number): number => {
+    return 1 - (1 - t) ** 3;
   };
 
   const scroll = (currentTime: number) => {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const ease = easeInOutQuad(progress);
+    const ease = easeOutCubic(progress);
 
     window.scrollTo(0, startPosition + distance * ease);
 
@@ -42,7 +42,9 @@ const SmoothScrollLink = React.forwardRef<HTMLAnchorElement, SmoothScrollLinkPro
         const targetElement = document.getElementById(targetId);
 
         if (targetElement) {
-          smoothScrollTo(targetElement, 1500);
+          const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+          const duration = isCoarsePointer ? 1100 : 1500;
+          smoothScrollTo(targetElement, duration);
         }
       }
 
