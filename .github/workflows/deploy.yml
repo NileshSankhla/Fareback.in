@@ -135,6 +135,11 @@ jobs:
         env:
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
+      - name: Seed production merchants
+        run: bun run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+
       - name: Install Vercel CLI
         run: bun add -g vercel@latest
 
