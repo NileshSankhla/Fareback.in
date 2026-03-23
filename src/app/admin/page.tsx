@@ -4,6 +4,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import {
   adminProcessWithdrawalFormAction,
 } from "@/app/actions/wallet";
+import AdminInteractiveSections from "@/components/admin/admin-interactive-sections";
 import AdminWalletAdjustForm from "@/components/admin/admin-wallet-adjust-form";
 import {
   Card,
@@ -23,8 +24,7 @@ import {
   walletTransactions,
   withdrawalRequests,
 } from "@/lib/db/schema";
-import { formatPaiseAsINR } from "@/lib/wallet";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPaiseAsINR } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -59,18 +59,52 @@ const AdminPage = async () => {
     .orderBy(desc(withdrawalRequests.createdAt))
     .limit(50);
 
-  const recentClicks = await db
-    .select({
-      id: clicks.id,
-      createdAt: clicks.createdAt,
-      userEmail: users.email,
-      merchantName: merchants.name,
-    })
-    .from(clicks)
-    .innerJoin(users, eq(users.id, clicks.userId))
-    .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
-    .orderBy(desc(clicks.createdAt))
-    .limit(30);
+  let recentClicks: Array<{
+    id: string;
+    createdAt: Date;
+    userEmail: string;
+    merchantName: string;
+    trackingStatus: "unreviewed" | "tracked" | "approved";
+    rewardAmountInPaise: number;
+  }> = [];
+
+  try {
+    recentClicks = await db
+      .select({
+        id: clicks.id,
+        createdAt: clicks.createdAt,
+        userEmail: users.email,
+        merchantName: merchants.name,
+        trackingStatus: clicks.trackingStatus,
+        rewardAmountInPaise: clicks.rewardAmountInPaise,
+      })
+      .from(clicks)
+      .innerJoin(users, eq(users.id, clicks.userId))
+      .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
+      .orderBy(desc(clicks.createdAt))
+      .limit(200);
+  } catch (error) {
+    console.error("Recent clicks query fallback (migration likely pending):", error);
+
+    const legacyClicks = await db
+      .select({
+        id: clicks.id,
+        createdAt: clicks.createdAt,
+        userEmail: users.email,
+        merchantName: merchants.name,
+      })
+      .from(clicks)
+      .innerJoin(users, eq(users.id, clicks.userId))
+      .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
+      .orderBy(desc(clicks.createdAt))
+      .limit(200);
+
+    recentClicks = legacyClicks.map((click) => ({
+      ...click,
+      trackingStatus: "unreviewed" as const,
+      rewardAmountInPaise: 0,
+    }));
+  }
 
   const recentWalletTransactions = await db
     .select({
@@ -91,11 +125,27 @@ const AdminPage = async () => {
       email: users.email,
       name: users.name,
       balanceInPaise: wallets.balanceInPaise,
+      updatedAt: wallets.updatedAt,
     })
     .from(wallets)
     .innerJoin(users, eq(users.id, wallets.userId))
     .orderBy(desc(wallets.updatedAt))
-    .limit(50);
+    .limit(500);
+
+  const allUserEmails = await db
+    .select({ email: users.email })
+    .from(users)
+    .orderBy(users.email)
+    .limit(500);
+
+  const clickRows = recentClicks.map((click) => ({
+    id: click.id,
+    createdAt: click.createdAt.toISOString(),
+    userEmail: click.userEmail,
+    merchantName: click.merchantName,
+    trackingStatus: click.trackingStatus,
+    rewardAmountInPaise: click.rewardAmountInPaise,
+  }));
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-10">
@@ -106,13 +156,7 @@ const AdminPage = async () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardDescription>Total Users</CardDescription>
-            <CardTitle>{overview?.usersCount ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardDescription>Total Clicks</CardDescription>
@@ -141,7 +185,7 @@ const AdminPage = async () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AdminWalletAdjustForm />
+          <AdminWalletAdjustForm userEmailSuggestions={allUserEmails.map((item) => item.email)} />
         </CardContent>
       </Card>
 
@@ -184,22 +228,6 @@ const AdminPage = async () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Click Tracking</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {recentClicks.map((click) => (
-              <div key={click.id} className="rounded-lg border border-border/60 p-3">
-                <p className="font-medium">{click.merchantName}</p>
-                <p className="text-muted-foreground">
-                  {click.userEmail} | {formatDate(click.createdAt)}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Recent Wallet Transactions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -218,19 +246,11 @@ const AdminPage = async () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>User Wallet Balances</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {usersWithWallet.map((wallet) => (
-            <div key={wallet.email} className="flex items-center justify-between rounded-lg border border-border/60 p-3">
-              <span>{wallet.name ?? "User"} ({wallet.email})</span>
-              <span className="font-medium">{formatPaiseAsINR(wallet.balanceInPaise)}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <AdminInteractiveSections
+        usersCount={overview?.usersCount ?? 0}
+        clicks={clickRows}
+        usersWithWallet={usersWithWallet}
+      />
     </div>
   );
 };

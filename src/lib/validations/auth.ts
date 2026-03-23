@@ -36,3 +36,17 @@ export const adminWithdrawalDecisionSchema = z.object({
   decision: z.enum(["approve", "reject", "mark-paid"]),
   note: z.string().trim().max(250).optional(),
 });
+
+export const adminTrackedClickSchema = z.object({
+  clickId: z.string().uuid({ message: "Invalid click ID." }),
+});
+
+export const adminApproveClickSchema = z.object({
+  clickId: z.string().uuid({ message: "Invalid click ID." }),
+  amount: z
+    .string()
+    .trim()
+    .regex(/^\d+(\.\d{1,2})?$/, {
+      message: "Enter a valid amount with up to 2 decimal places.",
+    }),
+});

@@ -13,8 +13,8 @@ import {
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withdrawalRequests } from "@/lib/db/schema";
-import { formatDate } from "@/lib/utils";
-import { ensureWalletForUser, formatPaiseAsINR } from "@/lib/wallet";
+import { formatDate, formatPaiseAsINR } from "@/lib/utils";
+import { ensureWalletForUser } from "@/lib/wallet";
 
 export const metadata: Metadata = {
   title: "Dashboard",

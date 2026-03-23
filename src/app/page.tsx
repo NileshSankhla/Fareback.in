@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { clicks, merchants, walletTransactions } from "@/lib/db/schema";
+import { clicks, merchants } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
@@ -68,21 +68,58 @@ const Page = async () => {
   let trackedItems: TrackedHistoryItem[] = [];
   if (user) {
     try {
-      const txs = await db
-        .select()
-        .from(walletTransactions)
-        .where(eq(walletTransactions.userId, user.id))
-        .orderBy(desc(walletTransactions.createdAt))
-        .limit(20);
+      let userClicks: Array<{
+        id: string;
+        clickDate: Date;
+        merchantName: string;
+        trackingStatus: "unreviewed" | "tracked" | "approved";
+        rewardAmount: number;
+      }> = [];
 
-      trackedItems = txs
-        .filter((tx) => tx.type === "credit")
-        .map((tx) => ({
-          id: tx.id,
-          merchantName: tx.note ?? "Purchase",
-          clickDate: tx.createdAt,
-          rewardAmount: tx.amountInPaise,
-          adminApproved: true,
+      try {
+        userClicks = await db
+          .select({
+            id: clicks.id,
+            clickDate: clicks.createdAt,
+            merchantName: merchants.name,
+            trackingStatus: clicks.trackingStatus,
+            rewardAmount: clicks.rewardAmountInPaise,
+          })
+          .from(clicks)
+          .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
+          .where(eq(clicks.userId, user.id))
+          .orderBy(desc(clicks.createdAt))
+          .limit(20);
+      } catch (error) {
+        console.error("Tracked history fallback (migration likely pending):", error);
+
+        const legacyClicks = await db
+          .select({
+            id: clicks.id,
+            clickDate: clicks.createdAt,
+            merchantName: merchants.name,
+          })
+          .from(clicks)
+          .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
+          .where(eq(clicks.userId, user.id))
+          .orderBy(desc(clicks.createdAt))
+          .limit(20);
+
+        userClicks = legacyClicks.map((click) => ({
+          ...click,
+          trackingStatus: "tracked" as const,
+          rewardAmount: 0,
+        }));
+      }
+
+      trackedItems = userClicks
+        .filter((click) => click.trackingStatus === "tracked" || click.trackingStatus === "approved")
+        .map((click) => ({
+          id: click.id,
+          merchantName: click.merchantName,
+          clickDate: click.clickDate,
+          rewardAmount: click.rewardAmount,
+          trackingStatus: click.trackingStatus,
         }));
     } catch (error) {
       console.error("Failed to fetch tracked history:", error);

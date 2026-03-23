@@ -19,7 +19,11 @@ const SubmitButton = () => {
   );
 };
 
-const AdminWalletAdjustForm = () => {
+interface AdminWalletAdjustFormProps {
+  userEmailSuggestions: string[];
+}
+
+const AdminWalletAdjustForm = ({ userEmailSuggestions }: AdminWalletAdjustFormProps) => {
   const [state, formAction] = useActionState(
     adminAdjustWalletAction,
     {},
@@ -32,8 +36,15 @@ const AdminWalletAdjustForm = () => {
           name="userEmail"
           placeholder="user@example.com"
           required
+          list="admin-user-email-suggestions"
+          autoComplete="off"
           className="md:col-span-2"
         />
+        <datalist id="admin-user-email-suggestions">
+          {userEmailSuggestions.map((email) => (
+            <option key={email} value={email} />
+          ))}
+        </datalist>
         <select
           name="type"
           className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"

@@ -28,6 +28,12 @@ export const walletTransactionTypeEnum = pgEnum("wallet_transaction_type", [
   "debit",
 ]);
 
+export const clickTrackingStatusEnum = pgEnum("click_tracking_status", [
+  "unreviewed",
+  "tracked",
+  "approved",
+]);
+
 export const withdrawalStatusEnum = pgEnum("withdrawal_status", [
   "pending",
   "approved",
@@ -66,10 +72,18 @@ export const clicks = pgTable("clicks", {
   merchantId: integer("merchant_id")
     .notNull()
     .references(() => merchants.id, { onDelete: "cascade" }),
+  trackingStatus: clickTrackingStatusEnum("tracking_status")
+    .notNull()
+    .default("unreviewed"),
+  rewardAmountInPaise: integer("reward_amount_in_paise").notNull().default(0),
+  reviewedByAdminId: integer("reviewed_by_admin_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("clicks_user_id_idx").on(table.userId),
   index("clicks_merchant_id_idx").on(table.merchantId),
+  index("clicks_tracking_status_idx").on(table.trackingStatus),
+  index("clicks_reviewed_by_admin_id_idx").on(table.reviewedByAdminId),
   index("clicks_created_at_idx").on(table.createdAt),
 ]);
 
@@ -110,10 +124,12 @@ export const walletTransactions = pgTable("wallet_transactions", {
   amountInPaise: integer("amount_in_paise").notNull(),
   note: text("note"),
   adminUserId: integer("admin_user_id").references(() => users.id),
+  sourceClickId: uuid("source_click_id").references(() => clicks.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("wallet_transactions_user_id_idx").on(table.userId),
   index("wallet_transactions_admin_user_id_idx").on(table.adminUserId),
+  index("wallet_transactions_source_click_id_idx").on(table.sourceClickId),
   index("wallet_transactions_created_at_idx").on(table.createdAt),
   check("wallet_transactions_amount_positive", sql`${table.amountInPaise} > 0`),
 ]);

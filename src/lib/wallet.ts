@@ -11,8 +11,6 @@ import {
 
 const clampToPaise = (value: number) => Math.max(0, Math.round(value));
 
-export const formatPaiseAsINR = (paise: number) => `₹${(paise / 100).toFixed(2)}`;
-
 export const ensureWalletForUser = async (userId: number) => {
   const [wallet] = await db.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
 
@@ -34,6 +32,7 @@ export const adjustWalletBalance = async (params: {
   type: (typeof walletTransactionTypeEnum.enumValues)[number];
   amountInPaise: number;
   note?: string;
+  sourceClickId?: string;
 }) => {
   const amountInPaise = clampToPaise(params.amountInPaise);
   if (amountInPaise <= 0) {
@@ -66,6 +65,7 @@ export const adjustWalletBalance = async (params: {
     type: params.type,
     amountInPaise,
     note: params.note,
+    sourceClickId: params.sourceClickId,
   });
 
   return updatedWallet;

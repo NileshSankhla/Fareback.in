@@ -6,9 +6,11 @@ import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/admin";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users, wallets, withdrawalRequests } from "@/lib/db/schema";
+import { clicks, users, wallets, walletTransactions, withdrawalRequests } from "@/lib/db/schema";
 import { adjustWalletBalance, ensureWalletForUser } from "@/lib/wallet";
 import {
+  adminApproveClickSchema,
+  adminTrackedClickSchema,
   adminWithdrawalDecisionSchema,
   walletAdjustmentSchema,
   withdrawalRequestSchema,
@@ -258,4 +260,210 @@ const adminProcessWithdrawalAction = async (
 
 export const adminProcessWithdrawalFormAction = async (formData: FormData) => {
   await adminProcessWithdrawalAction({}, formData);
+};
+
+export const adminMarkClickTrackedFormAction = async (formData: FormData) => {
+  try {
+    const admin = await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+    };
+
+    const validation = adminTrackedClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus === "approved") {
+      return;
+    }
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "tracked",
+        reviewedByAdminId: admin.id,
+        reviewedAt: new Date(),
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Admin mark click tracked error:", error);
+  }
+};
+
+export const adminUndoTrackedClickFormAction = async (formData: FormData) => {
+  try {
+    await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+    };
+
+    const validation = adminTrackedClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus !== "tracked") {
+      return;
+    }
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "unreviewed",
+        reviewedByAdminId: null,
+        reviewedAt: null,
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Admin undo tracked click error:", error);
+  }
+};
+
+export const adminApproveClickFormAction = async (formData: FormData) => {
+  try {
+    const admin = await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+      amount: getString(formData.get("amount")),
+    };
+
+    const validation = adminApproveClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const amountInPaise = parseRupeesToPaise(validation.data.amount);
+    if (amountInPaise <= 0) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus === "approved") {
+      return;
+    }
+
+    const [existingRewardTransaction] = await db
+      .select({ id: walletTransactions.id })
+      .from(walletTransactions)
+      .where(eq(walletTransactions.sourceClickId, click.id))
+      .limit(1);
+
+    if (existingRewardTransaction) {
+      return;
+    }
+
+    await adjustWalletBalance({
+      userId: click.userId,
+      adminUserId: admin.id,
+      type: "credit",
+      amountInPaise,
+      note: `Approved reward for click ${click.id}`,
+      sourceClickId: click.id,
+    });
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "approved",
+        rewardAmountInPaise: amountInPaise,
+        reviewedByAdminId: admin.id,
+        reviewedAt: new Date(),
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+  } catch (error) {
+    console.error("Admin approve click error:", error);
+  }
+};
+
+export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
+  try {
+    const admin = await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+    };
+
+    const validation = adminTrackedClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus !== "approved" || click.rewardAmountInPaise <= 0) {
+      return;
+    }
+
+    const [rewardTransaction] = await db
+      .select()
+      .from(walletTransactions)
+      .where(eq(walletTransactions.sourceClickId, click.id))
+      .limit(1);
+
+    if (!rewardTransaction || rewardTransaction.type !== "credit") {
+      return;
+    }
+
+    await adjustWalletBalance({
+      userId: click.userId,
+      adminUserId: admin.id,
+      type: "debit",
+      amountInPaise: rewardTransaction.amountInPaise,
+      note: `Undo approved reward for click ${click.id}`,
+      sourceClickId: undefined,
+    });
+
+    await db.delete(walletTransactions).where(eq(walletTransactions.id, rewardTransaction.id));
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "tracked",
+        rewardAmountInPaise: 0,
+        reviewedByAdminId: admin.id,
+        reviewedAt: new Date(),
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+  } catch (error) {
+    console.error("Admin undo approved click error:", error);
+  }
 };

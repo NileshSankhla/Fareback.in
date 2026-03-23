@@ -8,6 +8,13 @@
       "when": 1774004823900,
       "tag": "0000_cloudy_dagger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774200000000,
+      "tag": "0001_click_tracking_controls",
+      "breakpoints": true
     }
   ]
 }
