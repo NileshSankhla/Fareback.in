@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useCustomScroll } from "@/hooks/use-custom-scroll";
 
 interface SmoothScrollLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -23,9 +24,18 @@ interface SmoothScrollLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorEle
 const SmoothScrollLink = React.forwardRef<HTMLAnchorElement, SmoothScrollLinkProps>(
   ({ href, children, onClick, duration, offset = 0, ...props }, ref) => {
     const scrollToElement = useCustomScroll();
+    const pathname = usePathname();
+    const router = useRouter();
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (href.startsWith("#")) {
+        if (pathname !== "/") {
+          e.preventDefault();
+          router.push(`/${href}`);
+          onClick?.(e);
+          return;
+        }
+
         e.preventDefault();
         const targetId = href.substring(1);
         const targetElement = document.getElementById(targetId);

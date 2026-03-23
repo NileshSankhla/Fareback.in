@@ -15,7 +15,8 @@ export const useThemeSwitcher = () => {
   );
 
   const toggleTheme = () => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
   };
 
   return { theme, resolvedTheme, setTheme, toggleTheme, mounted };

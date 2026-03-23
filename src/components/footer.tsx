@@ -34,7 +34,7 @@ const Footer = async () => {
           </p>
           <div className="mt-6 flex gap-4">
             <Link
-              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/fareback.in/"}
+              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/fareback.inn/"}
               aria-label="Follow us on Instagram"
               target="_blank"
               rel="noopener noreferrer"
