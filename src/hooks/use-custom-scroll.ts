@@ -30,6 +30,15 @@ const smoothScrollTo = (
   duration: number = 1200,
   offset: number = 0
 ): void => {
+  // Grab the HTML element and store its current scroll behavior
+  const htmlElement = document.documentElement;
+  const originalScrollBehavior = htmlElement.style.scrollBehavior;
+
+  // Force the browser to jump instantly for our JS calculations,
+  // preventing CSS smooth scrolling from interfering with each animation frame
+  // (especially on mobile Safari where stacked CSS glides cause lag/stuttering)
+  htmlElement.style.scrollBehavior = 'auto';
+
   const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - offset;
   const startPosition = window.scrollY;
   const distance = targetPosition - startPosition;
@@ -51,6 +60,9 @@ const smoothScrollTo = (
     // Continue animation if not complete
     if (progress < 1) {
       requestAnimationFrame(animateScroll);
+    } else {
+      // Restore the original CSS behavior once the animation is completely finished
+      htmlElement.style.scrollBehavior = originalScrollBehavior;
     }
   };
 
