@@ -32,6 +32,7 @@ export const clickTrackingStatusEnum = pgEnum("click_tracking_status", [
   "unreviewed",
   "tracked",
   "approved",
+  "deleted",
 ]);
 
 export const withdrawalStatusEnum = pgEnum("withdrawal_status", [
@@ -151,4 +152,20 @@ export const withdrawalRequests = pgTable("withdrawal_requests", {
   index("withdrawal_requests_status_idx").on(table.status),
   index("withdrawal_requests_created_at_idx").on(table.createdAt),
   check("withdrawal_requests_amount_positive", sql`${table.amountInPaise} > 0`),
+]);
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at"),
+  adminUserId: integer("admin_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("notifications_user_id_idx").on(table.userId),
+  index("notifications_is_read_idx").on(table.isRead),
+  index("notifications_created_at_idx").on(table.createdAt),
 ]);

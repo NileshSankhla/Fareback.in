@@ -10,6 +10,7 @@ import { clicks, users, wallets, walletTransactions, withdrawalRequests } from "
 import { adjustWalletBalance, ensureWalletForUser } from "@/lib/wallet";
 import {
   adminApproveClickSchema,
+  adminDeleteClickSchema,
   adminTrackedClickSchema,
   adminWithdrawalDecisionSchema,
   walletAdjustmentSchema,
@@ -107,7 +108,6 @@ export const adminAdjustWalletAction = async (
       userEmail: getString(formData.get("userEmail")).trim().toLowerCase(),
       type: getString(formData.get("type")),
       amount: getString(formData.get("amount")).trim(),
-      note: getString(formData.get("note")).trim(),
     };
 
     const validation = walletAdjustmentSchema.safeParse(payload);
@@ -135,7 +135,7 @@ export const adminAdjustWalletAction = async (
       adminUserId: admin.id,
       type: validation.data.type,
       amountInPaise,
-      note: validation.data.note || undefined,
+      note: undefined,
     });
 
     revalidatePath("/admin");
@@ -281,7 +281,7 @@ export const adminMarkClickTrackedFormAction = async (formData: FormData) => {
       .where(eq(clicks.id, validation.data.clickId))
       .limit(1);
 
-    if (!click || click.trackingStatus === "approved") {
+    if (!click || click.trackingStatus === "approved" || click.trackingStatus === "deleted") {
       return;
     }
 
@@ -365,7 +365,7 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
       .where(eq(clicks.id, validation.data.clickId))
       .limit(1);
 
-    if (!click || click.trackingStatus === "approved") {
+    if (!click || click.trackingStatus === "approved" || click.trackingStatus === "deleted") {
       return;
     }
 
@@ -465,5 +465,96 @@ export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
     revalidatePath("/dashboard");
   } catch (error) {
     console.error("Admin undo approved click error:", error);
+  }
+};
+
+export const adminDeleteUnreviewedClickFormAction = async (formData: FormData) => {
+  try {
+    const admin = await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+    };
+
+    const validation = adminDeleteClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus !== "unreviewed") {
+      return;
+    }
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "deleted",
+        reviewedByAdminId: admin.id,
+        reviewedAt: new Date(),
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Admin delete unreviewed click error:", error);
+  }
+};
+
+export const adminPermanentlyDeleteAllDeletedClicksFormAction = async () => {
+  try {
+    await requireAdminUser();
+
+    await db.delete(clicks).where(eq(clicks.trackingStatus, "deleted"));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Admin permanent click purge error:", error);
+  }
+};
+
+export const adminRestoreDeletedClickFormAction = async (formData: FormData) => {
+  try {
+    await requireAdminUser();
+
+    const payload = {
+      clickId: getString(formData.get("clickId")),
+    };
+
+    const validation = adminDeleteClickSchema.safeParse(payload);
+    if (!validation.success) {
+      return;
+    }
+
+    const [click] = await db
+      .select()
+      .from(clicks)
+      .where(eq(clicks.id, validation.data.clickId))
+      .limit(1);
+
+    if (!click || click.trackingStatus !== "deleted") {
+      return;
+    }
+
+    await db
+      .update(clicks)
+      .set({
+        trackingStatus: "unreviewed",
+        reviewedByAdminId: null,
+        reviewedAt: null,
+      })
+      .where(eq(clicks.id, click.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Admin restore deleted click error:", error);
   }
 };

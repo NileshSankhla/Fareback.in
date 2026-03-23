@@ -15,6 +15,13 @@
       "when": 1774200000000,
       "tag": "0001_click_tracking_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774203600000,
+      "tag": "0002_click_deleted_notifications",
+      "breakpoints": true
     }
   ]
 }

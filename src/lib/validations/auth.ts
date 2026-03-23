@@ -9,7 +9,6 @@ export const walletAdjustmentSchema = z.object({
     .regex(/^\d+(\.\d{1,2})?$/, {
       message: "Enter a valid amount with up to 2 decimal places.",
     }),
-  note: z.string().trim().max(250).optional(),
 });
 
 export const withdrawalRequestSchema = z.object({
@@ -50,3 +49,26 @@ export const adminApproveClickSchema = z.object({
       message: "Enter a valid amount with up to 2 decimal places.",
     }),
 });
+
+export const adminDeleteClickSchema = z.object({
+  clickId: z.string().uuid({ message: "Invalid click ID." }),
+});
+
+export const adminSendAlertSchema = z
+  .object({
+    recipientType: z.enum(["all", "single"]),
+    userEmail: z.string().trim().optional(),
+    message: z.string().trim().min(2).max(300),
+  })
+  .superRefine((value, ctx) => {
+    if (value.recipientType === "single") {
+      const emailValidation = z.string().email().safeParse(value.userEmail ?? "");
+      if (!emailValidation.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["userEmail"],
+          message: "Valid user email is required for single-recipient alert.",
+        });
+      }
+    }
+  });

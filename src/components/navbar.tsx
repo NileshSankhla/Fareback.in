@@ -4,6 +4,7 @@ import { signOutAction } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { formatPaiseAsINR } from "@/lib/utils";
 import { ensureWalletForUser } from "@/lib/wallet";
+import NotificationBell from "./notification-bell";
 import ThemeSwitcher from "./theme-switcher";
 import { Button } from "./ui/button";
 import { Wallet } from "lucide-react";
@@ -70,6 +71,7 @@ const Navbar = async () => {
                   <span>{formatPaiseAsINR(wallet?.balanceInPaise ?? 0)}</span>
                 </div>
               )}
+              <NotificationBell userId={user.id} />
               <DashboardToggleButton />
               {user.isAdmin ? (
                 <Button variant="secondary" size="sm" asChild>

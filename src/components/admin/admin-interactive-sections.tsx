@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 
 import {
   adminApproveClickFormAction,
+  adminDeleteUnreviewedClickFormAction,
   adminMarkClickTrackedFormAction,
+  adminPermanentlyDeleteAllDeletedClicksFormAction,
+  adminRestoreDeletedClickFormAction,
   adminUndoApprovedClickFormAction,
   adminUndoTrackedClickFormAction,
 } from "@/app/actions/wallet";
@@ -19,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { formatDate, formatPaiseAsINR } from "@/lib/utils";
 
-type ClickStatus = "unreviewed" | "tracked" | "approved";
+type ClickStatus = "unreviewed" | "tracked" | "approved" | "deleted";
 
 interface AdminClickItem {
   id: string;
@@ -38,6 +41,9 @@ interface WalletUserItem {
 
 interface AdminInteractiveSectionsProps {
   usersCount: number;
+  clicksCount: number;
+  unreviewedClicksCount: number;
+  trackedClicksCount: number;
   clicks: AdminClickItem[];
   usersWithWallet: WalletUserItem[];
 }
@@ -46,10 +52,14 @@ const clickStatusLabel: Record<ClickStatus, string> = {
   unreviewed: "Unreviewed",
   tracked: "Tracked",
   approved: "Approved",
+  deleted: "Deleted",
 };
 
 const AdminInteractiveSections = ({
   usersCount,
+  clicksCount,
+  unreviewedClicksCount,
+  trackedClicksCount,
   clicks,
   usersWithWallet,
 }: AdminInteractiveSectionsProps) => {
@@ -94,7 +104,7 @@ const AdminInteractiveSections = ({
 
   const filteredClicks = useMemo(() => {
     if (clickFilter === "all") {
-      return clicks;
+      return clicks.filter((click) => click.trackingStatus !== "deleted");
     }
 
     return clicks.filter((click) => click.trackingStatus === clickFilter);
@@ -159,11 +169,11 @@ const AdminInteractiveSections = ({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="recent-click-tracking">
         <CardHeader>
           <CardTitle>Recent Click Tracking</CardTitle>
           <CardDescription>
-            Mark clicks as tracked, approve with reward amount, and undo if needed.
+            Total clicks: {clicksCount} | Unreviewed: {unreviewedClicksCount} | Tracked: {trackedClicksCount}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
@@ -177,7 +187,16 @@ const AdminInteractiveSections = ({
               <option value="tracked">Tracked only</option>
               <option value="approved">Approved only</option>
               <option value="unreviewed">Unreviewed only</option>
+              <option value="deleted">Deleted only</option>
             </select>
+
+            {clickFilter === "deleted" ? (
+              <form action={adminPermanentlyDeleteAllDeletedClicksFormAction}>
+                <Button type="submit" size="sm" variant="destructive">
+                  Permanently Delete All Deleted Entries
+                </Button>
+              </form>
+            ) : null}
           </div>
 
           {visibleClicks.length === 0 ? (
@@ -201,10 +220,24 @@ const AdminInteractiveSections = ({
                 ) : null}
 
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {click.trackingStatus !== "tracked" && click.trackingStatus !== "approved" ? (
+                  {click.trackingStatus === "unreviewed" ? (
                     <form action={adminMarkClickTrackedFormAction}>
                       <input type="hidden" name="clickId" value={click.id} />
                       <Button type="submit" variant="outline" size="sm">Tracked</Button>
+                    </form>
+                  ) : null}
+
+                  {click.trackingStatus === "unreviewed" ? (
+                    <form action={adminDeleteUnreviewedClickFormAction}>
+                      <input type="hidden" name="clickId" value={click.id} />
+                      <Button type="submit" variant="destructive" size="sm">Delete Entry</Button>
+                    </form>
+                  ) : null}
+
+                  {click.trackingStatus === "deleted" ? (
+                    <form action={adminRestoreDeletedClickFormAction}>
+                      <input type="hidden" name="clickId" value={click.id} />
+                      <Button type="submit" variant="outline" size="sm">Restore Entry</Button>
                     </form>
                   ) : null}
 
@@ -215,7 +248,7 @@ const AdminInteractiveSections = ({
                     </form>
                   ) : null}
 
-                  {click.trackingStatus !== "approved" ? (
+                  {click.trackingStatus === "unreviewed" || click.trackingStatus === "tracked" ? (
                     <form action={adminApproveClickFormAction} className="flex items-center gap-2">
                       <input type="hidden" name="clickId" value={click.id} />
                       <Input

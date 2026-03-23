@@ -15,7 +15,7 @@ import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 import SmoothScrollLink from "@/components/smooth-scroll-link";
 
-type ClickTrackingStatus = "unreviewed" | "tracked" | "approved";
+type ClickTrackingStatus = "unreviewed" | "tracked" | "approved" | "deleted";
 
 const isTrackedOrApproved = <T extends { trackingStatus: ClickTrackingStatus }>(
   click: T,

@@ -4,6 +4,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import {
   adminProcessWithdrawalFormAction,
 } from "@/app/actions/wallet";
+import AdminAlertForm from "@/components/admin/admin-alert-form";
 import AdminInteractiveSections from "@/components/admin/admin-interactive-sections";
 import AdminWalletAdjustForm from "@/components/admin/admin-wallet-adjust-form";
 import {
@@ -34,15 +35,51 @@ export const metadata: Metadata = {
 const AdminPage = async () => {
   await requireAdminUser();
 
-  const [overview] = await db
-    .select({
-      usersCount: sql<number>`(select count(*)::int from users)`,
-      clicksCount: sql<number>`(select count(*)::int from clicks)`,
-      pendingWithdrawalCount: sql<number>`(select count(*)::int from withdrawal_requests where status = 'pending')`,
-      totalWalletBalance: sql<number>`coalesce((select sum(balance_in_paise)::int from wallets), 0)`,
-    })
-    .from(users)
-    .limit(1);
+  let overview:
+    | {
+        usersCount: number;
+        clicksCount: number;
+        unreviewedClicksCount: number;
+        trackedClicksCount: number;
+        pendingWithdrawalCount: number;
+        totalWalletBalance: number;
+      }
+    | undefined;
+
+  try {
+    [overview] = await db
+      .select({
+        usersCount: sql<number>`(select count(*)::int from users)`,
+        clicksCount: sql<number>`(select count(*)::int from clicks where tracking_status <> 'deleted')`,
+        unreviewedClicksCount: sql<number>`(select count(*)::int from clicks where tracking_status = 'unreviewed')`,
+        trackedClicksCount: sql<number>`(select count(*)::int from clicks where tracking_status = 'tracked')`,
+        pendingWithdrawalCount: sql<number>`(select count(*)::int from withdrawal_requests where status = 'pending')`,
+        totalWalletBalance: sql<number>`coalesce((select sum(balance_in_paise)::int from wallets), 0)`,
+      })
+      .from(users)
+      .limit(1);
+  } catch (error) {
+    console.error("Overview fallback (migration likely pending):", error);
+
+    const [fallbackOverview] = await db
+      .select({
+        usersCount: sql<number>`(select count(*)::int from users)`,
+        clicksCount: sql<number>`(select count(*)::int from clicks)`,
+        pendingWithdrawalCount: sql<number>`(select count(*)::int from withdrawal_requests where status = 'pending')`,
+        totalWalletBalance: sql<number>`coalesce((select sum(balance_in_paise)::int from wallets), 0)`,
+      })
+      .from(users)
+      .limit(1);
+
+    overview = {
+      usersCount: fallbackOverview?.usersCount ?? 0,
+      clicksCount: fallbackOverview?.clicksCount ?? 0,
+      unreviewedClicksCount: fallbackOverview?.clicksCount ?? 0,
+      trackedClicksCount: 0,
+      pendingWithdrawalCount: fallbackOverview?.pendingWithdrawalCount ?? 0,
+      totalWalletBalance: fallbackOverview?.totalWalletBalance ?? 0,
+    };
+  }
 
   const pendingWithdrawals = await db
     .select({
@@ -64,7 +101,7 @@ const AdminPage = async () => {
     createdAt: Date;
     userEmail: string;
     merchantName: string;
-    trackingStatus: "unreviewed" | "tracked" | "approved";
+    trackingStatus: "unreviewed" | "tracked" | "approved" | "deleted";
     rewardAmountInPaise: number;
   }> = [];
 
@@ -157,10 +194,17 @@ const AdminPage = async () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
+        <Card id="total-clicks-metrics">
           <CardHeader>
-            <CardDescription>Total Clicks</CardDescription>
+            <CardDescription>
+              <a href="#recent-click-tracking" className="underline-offset-4 hover:underline">
+                Total Clicks (linked to recent tracking)
+              </a>
+            </CardDescription>
             <CardTitle>{overview?.clicksCount ?? 0}</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Unreviewed: {overview?.unreviewedClicksCount ?? 0} | Tracked: {overview?.trackedClicksCount ?? 0}
+            </p>
           </CardHeader>
         </Card>
         <Card>
@@ -186,6 +230,18 @@ const AdminPage = async () => {
         </CardHeader>
         <CardContent>
           <AdminWalletAdjustForm userEmailSuggestions={allUserEmails.map((item) => item.email)} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Send Alert</CardTitle>
+          <CardDescription>
+            Send an alert note to all users or a single user. Alerts are shown in user notifications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AdminAlertForm userEmailSuggestions={allUserEmails.map((item) => item.email)} />
         </CardContent>
       </Card>
 
@@ -248,6 +304,9 @@ const AdminPage = async () => {
 
       <AdminInteractiveSections
         usersCount={overview?.usersCount ?? 0}
+        clicksCount={overview?.clicksCount ?? 0}
+        unreviewedClicksCount={overview?.unreviewedClicksCount ?? 0}
+        trackedClicksCount={overview?.trackedClicksCount ?? 0}
         clicks={clickRows}
         usersWithWallet={usersWithWallet}
       />

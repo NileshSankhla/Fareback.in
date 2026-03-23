@@ -56,8 +56,6 @@ const AdminWalletAdjustForm = ({ userEmailSuggestions }: AdminWalletAdjustFormPr
         <Input name="amount" placeholder="100.00" required inputMode="decimal" />
       </div>
 
-      <Input name="note" placeholder="Optional note" maxLength={250} />
-
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
       {state.success ? <p className="text-sm text-green-600">{state.success}</p> : null}
 
