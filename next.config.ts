@@ -19,6 +19,21 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/favicon.ico",
+        destination: "/favicon-black.svg",
+        permanent: true,
+      },
+      {
+        source: "/favicon.png",
+        destination: "/favicon-black.svg",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
