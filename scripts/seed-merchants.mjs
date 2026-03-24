@@ -18,8 +18,9 @@ const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
 // Replace these baseUrl values with your actual affiliate tracking URLs later.
 // For example:
 //   Amazon Associates: https://www.amazon.in?tag=YOUR_TAG-21
-//   Flipkart Affiliate: https://www.flipkart.com?affid=YOUR_AFFID&affExtParam1=YOUR_PARAM
-//   Myntra: https://www.myntra.com/?utm_source=affiliate&utm_medium=affiliate_id
+//   Flipkart Affiliate: https://fktr.in/49T8I82
+//   Myntra: https://myntr.it/auK4aA9
+//   AJIO: https://ajiio.in/xTvzcfm
 // The system appends ?subid=<click_id> to help correlate clicks with your affiliate dashboard.
 const merchantsToSeed = [
   {
@@ -31,19 +32,19 @@ const merchantsToSeed = [
   },
   {
     name: "Flipkart",
-    baseUrl: "https://www.flipkart.com",
+    baseUrl: "https://fktr.in/49T8I82",
     cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=64",
   },
   {
     name: "Myntra",
-    baseUrl: "https://www.myntra.com",
+    baseUrl: "https://myntr.it/auK4aA9",
     cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=myntra.com&sz=64",
   },
   {
     name: "AJIO",
-    baseUrl: "https://www.ajio.com",
+    baseUrl: "https://ajiio.in/xTvzcfm",
     cashbackRate: "3.7%",
     logoUrl: "https://www.google.com/s2/favicons?domain=ajio.com&sz=64",
   },

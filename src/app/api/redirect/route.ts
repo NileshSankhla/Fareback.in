@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
   amazon:
     "https://www.amazon.in?&linkCode=ll2&tag=fareback-21&linkId=711b78face92a1bf8be6139d25b1f780&ref_=as_li_ss_tl",
-  flipkart: "https://www.flipkart.com",
-  myntra: "https://www.myntra.com",
-  ajio: "https://www.ajio.com",
+  flipkart: "https://fktr.in/49T8I82",
+  myntra: "https://myntr.it/auK4aA9",
+  ajio: "https://ajiio.in/xTvzcfm",
 };
 
 const appendSubidParam = (urlString: string, subid: string): string => {

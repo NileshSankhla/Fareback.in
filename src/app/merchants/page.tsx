@@ -69,6 +69,7 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
             {merchant ? (
               <Link
                 href={`/api/redirect?merchantId=${merchant.id}`}
+                prefetch={false}
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
               >
                 Shop at {merchant.name} Now
