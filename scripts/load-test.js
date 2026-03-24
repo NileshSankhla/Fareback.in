@@ -55,6 +55,14 @@ Warming up...
     const avgLatency = result.latency.mean;
     const p99Latency = result.latency.p99;
     const non2xx = result.non2xx ?? 0;
+    const twoXx = result["2xx"] ?? 0;
+    const threeXx = result["3xx"] ?? 0;
+    const fourXx = result["4xx"] ?? 0;
+    const fiveXx = result["5xx"] ?? 0;
+    const totalResponses = twoXx + threeXx + fourXx + fiveXx;
+    const successResponses = twoXx + threeXx;
+    const successRatio = totalResponses > 0 ? successResponses / totalResponses : 0;
+    const effectiveReqPerSec = reqPerSec * successRatio;
 
     console.log("\n");
     console.log("Requests/sec:", Math.floor(reqPerSec), `(${result.requests.total} total)`);
@@ -64,17 +72,28 @@ Warming up...
     console.log("Errors:", result.errors);
     console.log("Non-2xx:", non2xx);
     console.log("Timeouts:", result.timeouts ?? 0);
+    console.log(
+      "Status codes:",
+      `2xx=${twoXx} 3xx=${threeXx} 4xx=${fourXx} 5xx=${fiveXx}`,
+    );
 
     console.log("\n");
     console.log("╔════════════════════════════════════════════════════════════╗");
     console.log("║                    Capacity Estimate                       ║");
     console.log("╚════════════════════════════════════════════════════════════╝\n");
 
-    console.log(`Req/Sec: ${Math.floor(reqPerSec)}`);
+    console.log(`Req/Sec (raw): ${Math.floor(reqPerSec)}`);
+    console.log(`Req/Sec (successful): ${Math.floor(effectiveReqPerSec)}`);
     console.log(`P99 Latency: ${Math.floor(p99Latency)}ms`);
     console.log("\nAssuming users generate ~0.1 req/sec (one request every 10s):");
-    console.log(`  Safe capacity: ~${Math.floor((reqPerSec * 0.3) / 0.1)} concurrent users (30% headroom)`);
-    console.log(`  Peak capacity: ~${Math.floor((reqPerSec * 0.5) / 0.1)} concurrent users (50% headroom)`);
+    console.log(`  Safe capacity: ~${Math.floor((effectiveReqPerSec * 0.3) / 0.1)} concurrent users (30% headroom)`);
+    console.log(`  Peak capacity: ~${Math.floor((effectiveReqPerSec * 0.5) / 0.1)} concurrent users (50% headroom)`);
+
+    if (successRatio < 0.95) {
+      console.log("\nWARNING: High response failure ratio; capacity estimate is not reliable.");
+      console.log(`  - Successful responses: ${(successRatio * 100).toFixed(2)}%`);
+      console.log("  - Resolve 4xx/5xx before trusting this benchmark");
+    }
 
     if (avgLatency > 500) {
       console.log("\nWARNING: Average latency is high (>500ms)");
@@ -91,6 +110,12 @@ Warming up...
       console.log("\nWARNING: Request failures detected");
       console.log("  - Inspect Vercel logs during the run");
       console.log("  - Validate DB health endpoint at /api/health/db");
+      if (fourXx > 0) {
+        console.log("  - 4xx indicates blocking/auth/route protections (common: 403 or 429)");
+      }
+      if (fiveXx > 0) {
+        console.log("  - 5xx indicates server/database failures under load");
+      }
     }
 
     console.log("\n");
