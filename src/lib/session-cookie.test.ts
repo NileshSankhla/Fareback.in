@@ -14,13 +14,13 @@ describe("session cookie helpers", () => {
     expect(getSessionTokenFromRequest(request)).toBe("abc123");
   });
 
-  it("falls back to legacy session cookie", () => {
+  it("returns undefined when no session cookie is present", () => {
     const request = new NextRequest("http://localhost:3000/dashboard", {
       headers: {
-        cookie: "session=legacy123",
+        cookie: "",
       },
     });
 
-    expect(getSessionTokenFromRequest(request)).toBe("legacy123");
+    expect(getSessionTokenFromRequest(request)).toBeUndefined();
   });
 });

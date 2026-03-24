@@ -44,49 +44,19 @@ const Page = async () => {
   let trackedItems: TrackedHistoryItem[] = [];
   if (user) {
     try {
-      let userClicks: Array<{
-        id: string;
-        clickDate: Date;
-        merchantName: string;
-        trackingStatus: ClickTrackingStatus;
-        rewardAmount: number;
-      }> = [];
-
-      try {
-        userClicks = await db
-          .select({
-            id: clicks.id,
-            clickDate: clicks.createdAt,
-            merchantName: merchants.name,
-            trackingStatus: clicks.trackingStatus,
-            rewardAmount: clicks.rewardAmountInPaise,
-          })
-          .from(clicks)
-          .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
-          .where(eq(clicks.userId, user.id))
-          .orderBy(desc(clicks.createdAt))
-          .limit(20);
-      } catch (error) {
-        console.error("Tracked history fallback (migration likely pending):", error);
-
-        const legacyClicks = await db
-          .select({
-            id: clicks.id,
-            clickDate: clicks.createdAt,
-            merchantName: merchants.name,
-          })
-          .from(clicks)
-          .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
-          .where(eq(clicks.userId, user.id))
-          .orderBy(desc(clicks.createdAt))
-          .limit(20);
-
-        userClicks = legacyClicks.map((click) => ({
-          ...click,
-          trackingStatus: "tracked" as const,
-          rewardAmount: 0,
-        }));
-      }
+      const userClicks = await db
+        .select({
+          id: clicks.id,
+          clickDate: clicks.createdAt,
+          merchantName: merchants.name,
+          trackingStatus: clicks.trackingStatus,
+          rewardAmount: clicks.rewardAmountInPaise,
+        })
+        .from(clicks)
+        .innerJoin(merchants, eq(merchants.id, clicks.merchantId))
+        .where(eq(clicks.userId, user.id))
+        .orderBy(desc(clicks.createdAt))
+        .limit(20);
 
       trackedItems = userClicks
         .filter(isTrackedOrApproved)

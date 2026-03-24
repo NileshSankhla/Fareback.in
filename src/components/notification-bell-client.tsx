@@ -21,9 +21,7 @@ const NotificationBellClient = () => {
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
-        const res = await fetch("/api/user/notifications/unread-count", {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/user/notifications/unread-count");
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.unreadCount);

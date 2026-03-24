@@ -5,6 +5,7 @@ import { notifications } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export async function GET() {
   try {
@@ -20,9 +21,16 @@ export async function GET() {
       .from(notifications)
       .where(and(eq(notifications.userId, user.id), eq(notifications.isRead, false)));
 
-    return NextResponse.json({
-      unreadCount: counts?.unreadCount ?? 0,
-    });
+    return NextResponse.json(
+      {
+        unreadCount: counts?.unreadCount ?? 0,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+        },
+      }
+    );
   } catch (error) {
     console.error("Unread notifications API error:", error);
     return NextResponse.json(
