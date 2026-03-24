@@ -6,8 +6,6 @@
  * Or: npm run load-test:quick (defaults: localhost:3000, 50 connections, 20s)
  */
 
-const assert = require("assert");
-
 async function runLoadTest() {
   const args = process.argv.slice(2);
   const url = getArgValue(args, "--url") || "http://127.0.0.1:3000";
@@ -27,8 +25,7 @@ Warming up...
   `);
 
   try {
-    const nodePath = require.resolve("autocannon/cmd", { paths: [process.cwd()] }).replace("/cmd.js", "");
-    const autocannon = require("autocannon");
+    const { default: autocannon } = await import("autocannon");
 
     const result = await autocannon({
       url,

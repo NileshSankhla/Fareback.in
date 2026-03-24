@@ -4,13 +4,9 @@ import { Bell } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface NotificationBellClientProps {
-  userId: number;
-}
-
 const LAST_PATH_KEY = "fareback:last-path";
 
-const NotificationBellClient = ({ userId }: NotificationBellClientProps) => {
+const NotificationBellClient = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number | null>(null);

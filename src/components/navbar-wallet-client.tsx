@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import { Wallet } from "lucide-react";
 import { formatPaiseAsINR } from "@/lib/utils";
 
-interface NavbarWalletClientProps {
-  userId: number;
-}
-
-const NavbarWalletClient = ({ userId }: NavbarWalletClientProps) => {
+const NavbarWalletClient = () => {
   const [balanceInPaise, setBalanceInPaise] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

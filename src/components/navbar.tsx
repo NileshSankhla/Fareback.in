@@ -62,8 +62,8 @@ const Navbar = async () => {
           <ThemeSwitcher />
           {user ? (
             <>
-              <NavbarWalletClient userId={user.id} />
-              <NotificationBellClient userId={user.id} />
+              <NavbarWalletClient />
+              <NotificationBellClient />
               <DashboardToggleButton />
               {user.isAdmin ? (
                 <Button variant="secondary" size="sm" asChild>
