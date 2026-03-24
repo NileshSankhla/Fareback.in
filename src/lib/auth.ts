@@ -4,6 +4,7 @@ import { randomBytes, scryptSync } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { db } from "@/lib/db";
 import { sessions, users } from "@/lib/db/schema";
@@ -54,7 +55,7 @@ export const deleteSessionByToken = async (token: string) => {
   await db.delete(sessions).where(eq(sessions.token, token));
 };
 
-export const getCurrentUser = async (): Promise<CurrentUser | null> => {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const token = await getSessionToken();
 
   if (!token) {
@@ -74,7 +75,7 @@ export const getCurrentUser = async (): Promise<CurrentUser | null> => {
     .limit(1);
 
   return result ?? null;
-};
+});
 
 export const requireUser = async (): Promise<CurrentUser> => {
   const user = await getCurrentUser();

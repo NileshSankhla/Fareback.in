@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { merchants } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getMerchantById } from "@/lib/data/merchants";
 
 interface MerchantsPageProps {
   searchParams: Promise<{ merchantId?: string }>;
@@ -21,12 +19,7 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
   if (params.merchantId) {
     const merchantId = parseInt(params.merchantId, 10);
     if (!isNaN(merchantId)) {
-      const [m] = await db
-        .select()
-        .from(merchants)
-        .where(eq(merchants.id, merchantId))
-        .limit(1);
-      merchant = m;
+      merchant = await getMerchantById(merchantId);
     }
   }
 

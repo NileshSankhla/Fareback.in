@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import {
   Card,
   CardContent,
@@ -13,7 +13,7 @@ import { clicks, merchants } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
-import SmoothScrollLink from "@/components/smooth-scroll-link";
+import { getAllMerchants, SUPPORTED_MERCHANT_NAMES } from "@/lib/data/merchants";
 
 type ClickTrackingStatus = "unreviewed" | "tracked" | "approved" | "deleted";
 
@@ -22,55 +22,24 @@ const isTrackedOrApproved = <T extends { trackingStatus: ClickTrackingStatus }>(
 ): click is T & { trackingStatus: "tracked" | "approved" } =>
   click.trackingStatus === "tracked" || click.trackingStatus === "approved";
 
-async function getFavoritePlatform(
-  userId: number | null,
-  merchantList: { id: number; name: string }[],
-): Promise<string> {
-  if (merchantList.length === 0) return "your favorite store";
-
-  if (userId !== null) {
-    try {
-      const [top] = await db
-        .select({
-          merchantId: clicks.merchantId,
-          count: sql<number>`count(*)::int`,
-        })
-        .from(clicks)
-        .where(eq(clicks.userId, userId))
-        .groupBy(clicks.merchantId)
-        .orderBy(desc(sql`count(*)`))
-        .limit(1);
-
-      if (top) {
-        const merchant = merchantList.find((m) => m.id === top.merchantId);
-        if (merchant) return merchant.name;
-      }
-    } catch {
-      // fall through to random selection
-    }
-  }
-
-  return merchantList[Math.floor(Math.random() * merchantList.length)].name;
-}
-
 const Page = async () => {
   const user = await getCurrentUser();
   let merchantList: (typeof merchants.$inferSelect)[] = [];
 
   try {
-    merchantList = await db.select().from(merchants);
+    merchantList = await getAllMerchants();
   } catch (error) {
     console.error("Failed to fetch merchants:", error);
   }
 
-  const supportedMerchantNames = new Set(["amazon", "flipkart", "myntra", "ajio"]);
   const visibleMerchantList = merchantList.filter((merchant) =>
-    supportedMerchantNames.has(merchant.name.trim().toLowerCase()),
+    SUPPORTED_MERCHANT_NAMES.has(merchant.name.trim().toLowerCase()),
   );
-  const favoritePlatform = await getFavoritePlatform(
-    user?.id ?? null,
-    visibleMerchantList,
-  );
+  const defaultFavoritePlatform =
+    visibleMerchantList
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))[0]?.name ?? "your favorite store";
+  let favoritePlatform = defaultFavoritePlatform;
 
   let trackedItems: TrackedHistoryItem[] = [];
   if (user) {
@@ -128,6 +97,20 @@ const Page = async () => {
           rewardAmount: click.rewardAmount,
           trackingStatus: click.trackingStatus,
         }));
+
+      if (userClicks.length > 0) {
+        const merchantFrequency = new Map<string, number>();
+        for (const click of userClicks) {
+          merchantFrequency.set(
+            click.merchantName,
+            (merchantFrequency.get(click.merchantName) ?? 0) + 1,
+          );
+        }
+
+        favoritePlatform = [...merchantFrequency.entries()].sort(
+          (a, b) => b[1] - a[1],
+        )[0]?.[0] ?? defaultFavoritePlatform;
+      }
     } catch (error) {
       console.error("Failed to fetch tracked history:", error);
     }
@@ -149,12 +132,12 @@ const Page = async () => {
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
               {user ? (
-                <SmoothScrollLink
-                  href="#offers"
+                <Link
+                  href="/#offers"
                   className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
                 >
                   Shop Now
-                </SmoothScrollLink>
+                </Link>
               ) : (
                 <Link
                   href="/sign-in"
@@ -214,7 +197,6 @@ const Page = async () => {
                             width={48}
                             height={48}
                             className="object-contain"
-                            unoptimized
                           />
                         </div>
                       ) : null}
@@ -311,12 +293,12 @@ const Page = async () => {
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Ready to start earning cashback?</p>
             {user ? (
-              <SmoothScrollLink
-                href="#offers"
+              <Link
+                href="/#offers"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
               >
                 Shop Now
-              </SmoothScrollLink>
+              </Link>
             ) : (
               <Link
                 href="/sign-in"

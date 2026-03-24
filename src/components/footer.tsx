@@ -1,12 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Mail } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import SmoothScrollLink from "@/components/smooth-scroll-link";
 
-const Footer = async () => {
-  const user = await getCurrentUser();
-
+const Footer = () => {
   return (
   <footer className="border-t border-border/40 bg-background">
     <div className="container mx-auto px-4 py-12">
@@ -57,45 +53,36 @@ const Footer = async () => {
           <h3 className="text-sm font-semibold mb-4">Platform</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <SmoothScrollLink
-                href="#offers"
+              <Link
+                href="/#offers"
                 className="transition-colors hover:text-foreground"
               >
                 Cashback Offers
-              </SmoothScrollLink>
+              </Link>
             </li>
             <li>
-              <SmoothScrollLink
-                href="#how-it-works"
+              <Link
+                href="/#how-it-works"
                 className="transition-colors hover:text-foreground"
               >
                 How It Works
-              </SmoothScrollLink>
+              </Link>
             </li>
             <li>
-              <SmoothScrollLink
-                href="#faq"
+              <Link
+                href="/#faq"
                 className="transition-colors hover:text-foreground"
               >
                 FAQs
-              </SmoothScrollLink>
+              </Link>
             </li>
             <li>
-              {user ? (
-                <SmoothScrollLink
-                  href="#offers"
-                  className="transition-colors hover:text-foreground font-medium"
-                >
-                  Get Started
-                </SmoothScrollLink>
-              ) : (
-                <Link
-                  href="/sign-in"
-                  className="transition-colors hover:text-foreground font-medium"
-                >
-                  Get Started
-                </Link>
-              )}
+              <Link
+                href="/sign-in"
+                className="transition-colors hover:text-foreground font-medium"
+              >
+                Get Started
+              </Link>
             </li>
           </ul>
         </div>

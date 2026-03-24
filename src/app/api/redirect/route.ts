@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { clicks, merchants } from "@/lib/db/schema";
-import { getCurrentUser, requireUser } from "@/lib/auth";
-import { eq } from "drizzle-orm";
+import { clicks } from "@/lib/db/schema";
+import { getCurrentUser } from "@/lib/auth";
+import { getMerchantById, SUPPORTED_MERCHANT_NAMES } from "@/lib/data/merchants";
 import { NextRequest, NextResponse } from "next/server";
 
 const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
@@ -11,8 +11,6 @@ const TEST_MERCHANT_HOMEPAGES: Record<string, string> = {
   myntra: "https://www.myntra.com",
   ajio: "https://www.ajio.com",
 };
-
-const SUPPORTED_MERCHANTS = new Set(Object.keys(TEST_MERCHANT_HOMEPAGES));
 
 const appendSubidParam = (urlString: string, subid: string): string => {
   const url = new URL(urlString);
@@ -38,14 +36,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid merchantId" }, { status: 400 });
     }
 
-    // Require user to be logged in
-    const user = await requireUser();
+    const user = await getCurrentUser();
+    if (!user) {
+      const redirectTo = new URL(
+        `/sign-in?redirect=/merchants?merchantId=${merchantId}`,
+        request.url,
+      );
+      return NextResponse.redirect(redirectTo, { status: 307 });
+    }
 
-    const [merchant] = await db
-      .select()
-      .from(merchants)
-      .where(eq(merchants.id, merchantId))
-      .limit(1);
+    const merchant = await getMerchantById(merchantId);
 
     if (!merchant) {
       return NextResponse.json({ error: "Merchant not found" }, { status: 404 });
@@ -55,12 +55,12 @@ export async function GET(request: NextRequest) {
     await db
       .insert(clicks)
       .values({ userId: user.id, merchantId })
-      .returning({ id: clicks.id });
+      .execute();
 
     let destinationUrl: URL;
     try {
       const merchantNameKey = merchant.name.trim().toLowerCase();
-      if (!SUPPORTED_MERCHANTS.has(merchantNameKey)) {
+      if (!SUPPORTED_MERCHANT_NAMES.has(merchantNameKey)) {
         return NextResponse.json(
           { error: "Merchant is not currently supported" },
           { status: 404 },

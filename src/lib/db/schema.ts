@@ -82,6 +82,12 @@ export const clicks = pgTable("clicks", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("clicks_user_id_idx").on(table.userId),
+  index("clicks_user_id_created_at_idx").on(table.userId, table.createdAt),
+  index("clicks_user_status_created_at_idx").on(
+    table.userId,
+    table.trackingStatus,
+    table.createdAt,
+  ),
   index("clicks_merchant_id_idx").on(table.merchantId),
   index("clicks_tracking_status_idx").on(table.trackingStatus),
   index("clicks_reviewed_by_admin_id_idx").on(table.reviewedByAdminId),
@@ -100,6 +106,7 @@ export const sessions = pgTable("sessions", {
   index("sessions_user_id_idx").on(table.userId),
   index("sessions_expires_at_idx").on(table.expiresAt),
   index("sessions_token_idx").on(table.token),
+  index("sessions_token_expires_at_idx").on(table.token, table.expiresAt),
 ]);
 
 export const wallets = pgTable("wallets", {
@@ -129,6 +136,7 @@ export const walletTransactions = pgTable("wallet_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("wallet_transactions_user_id_idx").on(table.userId),
+  index("wallet_transactions_user_id_created_at_idx").on(table.userId, table.createdAt),
   index("wallet_transactions_admin_user_id_idx").on(table.adminUserId),
   index("wallet_transactions_source_click_id_idx").on(table.sourceClickId),
   index("wallet_transactions_created_at_idx").on(table.createdAt),
@@ -149,6 +157,11 @@ export const withdrawalRequests = pgTable("withdrawal_requests", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("withdrawal_requests_user_id_idx").on(table.userId),
+  index("withdrawal_requests_user_status_created_at_idx").on(
+    table.userId,
+    table.status,
+    table.createdAt,
+  ),
   index("withdrawal_requests_status_idx").on(table.status),
   index("withdrawal_requests_created_at_idx").on(table.createdAt),
   check("withdrawal_requests_amount_positive", sql`${table.amountInPaise} > 0`),
@@ -166,6 +179,8 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("notifications_user_id_idx").on(table.userId),
+  index("notifications_user_unread_idx").on(table.userId, table.isRead),
+  index("notifications_user_created_at_idx").on(table.userId, table.createdAt),
   index("notifications_is_read_idx").on(table.isRead),
   index("notifications_created_at_idx").on(table.createdAt),
 ]);
