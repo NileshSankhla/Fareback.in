@@ -2,17 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
-import { formatPaiseAsINR } from "@/lib/utils";
-import { ensureWalletForUser } from "@/lib/wallet";
-import NotificationBell from "./notification-bell";
+import NotificationBellClient from "./notification-bell-client";
+import NavbarWalletClient from "./navbar-wallet-client";
 import ThemeSwitcher from "./theme-switcher";
 import { Button } from "./ui/button";
-import { Wallet } from "lucide-react";
 import DashboardToggleButton from "./dashboard-toggle-button";
 
 const Navbar = async () => {
   const user = await getCurrentUser();
-  const wallet = user ? await ensureWalletForUser(user.id) : null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,13 +62,8 @@ const Navbar = async () => {
           <ThemeSwitcher />
           {user ? (
             <>
-              {wallet && (
-                <div className="hidden items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-semibold md:flex">
-                  <Wallet className="h-4 w-4 text-primary" />
-                  <span>{formatPaiseAsINR(wallet?.balanceInPaise ?? 0)}</span>
-                </div>
-              )}
-              <NotificationBell userId={user.id} />
+              <NavbarWalletClient userId={user.id} />
+              <NotificationBellClient userId={user.id} />
               <DashboardToggleButton />
               {user.isAdmin ? (
                 <Button variant="secondary" size="sm" asChild>
