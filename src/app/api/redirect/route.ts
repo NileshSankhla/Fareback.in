@@ -1,3 +1,4 @@
+import { and, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { clicks } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -51,11 +52,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Merchant not found" }, { status: 404 });
     }
 
-    // Create click record
-    await db
-      .insert(clicks)
-      .values({ userId: user.id, merchantId })
-      .execute();
+    // Deduplicate accidental rapid duplicate requests (double click/retry).
+    const duplicateCutoff = new Date(Date.now() - 10_000);
+    const [recentClick] = await db
+      .select({ id: clicks.id })
+      .from(clicks)
+      .where(
+        and(
+          eq(clicks.userId, user.id),
+          eq(clicks.merchantId, merchantId),
+          gte(clicks.createdAt, duplicateCutoff),
+        ),
+      )
+      .orderBy(desc(clicks.createdAt))
+      .limit(1);
+
+    if (!recentClick) {
+      await db.insert(clicks).values({ userId: user.id, merchantId }).execute();
+    }
 
     let destinationUrl: URL;
     try {

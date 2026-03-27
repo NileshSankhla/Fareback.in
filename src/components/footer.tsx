@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Mail } from "lucide-react";
+import FooterNavLink from "@/components/footer-nav-link";
 
 const Footer = () => {
   return (
@@ -8,7 +9,7 @@ const Footer = () => {
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-2">
-          <Link href="/" className="flex items-center transition-opacity hover:opacity-80" aria-label="Fareback home">
+          <FooterNavLink href="/" className="flex items-center transition-opacity hover:opacity-80" ariaLabel="Fareback home">
             <Image
               src="/brand-name-dark.svg"
               alt="Fareback"
@@ -23,7 +24,7 @@ const Footer = () => {
               height={64}
               className="hidden h-9 w-auto dark:block"
             />
-          </Link>
+          </FooterNavLink>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
             India&apos;s trusted cashback platform. Shop from top brands,
             earn guaranteed rewards, and withdraw via UPI.
@@ -53,36 +54,28 @@ const Footer = () => {
           <h3 className="text-sm font-semibold mb-4">Platform</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <Link
+              <FooterNavLink
                 href="/#offers"
                 className="transition-colors hover:text-foreground"
               >
                 Cashback Offers
-              </Link>
+              </FooterNavLink>
             </li>
             <li>
-              <Link
+              <FooterNavLink
                 href="/#how-it-works"
                 className="transition-colors hover:text-foreground"
               >
                 How It Works
-              </Link>
+              </FooterNavLink>
             </li>
             <li>
-              <Link
+              <FooterNavLink
                 href="/#faq"
                 className="transition-colors hover:text-foreground"
               >
                 FAQs
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/sign-in"
-                className="transition-colors hover:text-foreground font-medium"
-              >
-                Get Started
-              </Link>
+              </FooterNavLink>
             </li>
           </ul>
         </div>
@@ -91,28 +84,28 @@ const Footer = () => {
           <h3 className="text-sm font-semibold mb-4">Legal</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <Link
+              <FooterNavLink
                 href="/privacy"
                 className="transition-colors hover:text-foreground"
               >
                 Privacy Policy
-              </Link>
+              </FooterNavLink>
             </li>
             <li>
-              <Link
+              <FooterNavLink
                 href="/terms"
                 className="transition-colors hover:text-foreground"
               >
-                Terms of Service
-              </Link>
+                Terms and Conditions
+              </FooterNavLink>
             </li>
             <li>
-              <Link
+              <FooterNavLink
                 href="/affiliate-rates"
                 className="transition-colors hover:text-foreground"
               >
-                Affiliate Rates
-              </Link>
+                *Cashback Rates
+              </FooterNavLink>
             </li>
           </ul>
         </div>

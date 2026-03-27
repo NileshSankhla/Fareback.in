@@ -19,9 +19,16 @@ const NotificationBellClient = () => {
   }, [isNotificationsOpen, pathname]);
 
   useEffect(() => {
+    if (isNotificationsOpen) {
+      setUnreadCount(0);
+      return;
+    }
+
     const fetchUnreadCount = async () => {
       try {
-        const res = await fetch("/api/user/notifications/unread-count");
+        const res = await fetch("/api/user/notifications/unread-count", {
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.unreadCount);
@@ -32,7 +39,7 @@ const NotificationBellClient = () => {
     };
 
     fetchUnreadCount();
-  }, []);
+  }, [isNotificationsOpen, pathname]);
 
   const handleClick = () => {
     if (isNotificationsOpen) {

@@ -5,7 +5,7 @@ import { notifications } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 30;
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -27,7 +27,7 @@ export async function GET() {
       },
       {
         headers: {
-          "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       }
     );

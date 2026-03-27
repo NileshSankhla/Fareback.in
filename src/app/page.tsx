@@ -13,6 +13,7 @@ import { clicks, merchants } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
+import ShopNowButton from "@/components/shop-now-button";
 import { getAllMerchants, SUPPORTED_MERCHANT_NAMES } from "@/lib/data/merchants";
 
 type ClickTrackingStatus = "unreviewed" | "tracked" | "approved" | "deleted";
@@ -102,18 +103,13 @@ const Page = async () => {
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
               {user ? (
-                <Link
-                  href="/#offers"
-                  className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
-                >
-                  Shop Now
-                </Link>
+                <ShopNowButton className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105" />
               ) : (
                 <Link
                   href="/sign-in"
                   className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl hover:scale-105"
                 >
-                  Get Started Free
+                  Get Started
                 </Link>
               )}
               <Link
@@ -249,6 +245,10 @@ const Page = async () => {
                 q: "How do I ensure my purchase is tracked correctly?",
                 a: "Start with an empty cart, click through from Fareback to the merchant site, and complete your purchase in the same session without using external coupons.",
               },
+              {
+                q: "Do merchant platform card offers and ongoing deals still apply?",
+                a: "Yes. Merchant platform offers, card discounts, and eligible ongoing deals remain valid on partner sites. Shopping through Fareback does not change or reduce merchant-provided offers.",
+              },
             ].map(({ q, a }) => (
               <Card key={q} className="border-border/60 transition-all duration-200 hover:shadow-md hover:border-primary/30">
                 <CardHeader>
@@ -263,12 +263,7 @@ const Page = async () => {
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Ready to start earning cashback?</p>
             {user ? (
-              <Link
-                href="/#offers"
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
-              >
-                Shop Now
-              </Link>
+              <ShopNowButton className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl" />
             ) : (
               <Link
                 href="/sign-in"

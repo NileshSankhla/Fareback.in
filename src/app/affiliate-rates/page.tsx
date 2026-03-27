@@ -3,14 +3,14 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Affiliate Rates Information",
+  title: "Cashback Rates Information",
   description: "Understanding cashback rates and how affiliate commissions work at Fareback.",
 };
 
 const AffiliateRatesPage = () => (
   <div className="container mx-auto max-w-4xl px-4 py-16">
     <div className="mb-8">
-      <h1 className="text-4xl font-bold tracking-tight">Affiliate Rates Information</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Cashback Rates Information</h1>
       <p className="mt-4 text-lg text-muted-foreground">
         Understanding how cashback percentages work and what affects your earnings
       </p>
@@ -74,7 +74,6 @@ const AffiliateRatesPage = () => (
             <li>Always start with an empty shopping cart before clicking through Fareback</li>
             <li>Complete your purchase in the same browser session</li>
             <li>Avoid using ad blockers or private browsing modes</li>
-            <li>Use only coupons and offers provided through Fareback platform</li>
             <li>Keep your purchase within the merchant&apos;s terms and conditions</li>
           </ul>
         </CardContent>
