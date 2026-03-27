@@ -19,10 +19,7 @@ const NotificationBellClient = () => {
   }, [isNotificationsOpen, pathname]);
 
   useEffect(() => {
-    if (isNotificationsOpen) {
-      setUnreadCount(0);
-      return;
-    }
+    if (isNotificationsOpen) return;
 
     const fetchUnreadCount = async () => {
       try {
@@ -63,7 +60,7 @@ const NotificationBellClient = () => {
       aria-label={isNotificationsOpen ? "Close notifications" : "Open notifications"}
     >
       <Bell className="h-4 w-4" />
-      {unreadCount !== null && unreadCount > 0 ? (
+      {!isNotificationsOpen && unreadCount !== null && unreadCount > 0 ? (
         <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-destructive-foreground">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
