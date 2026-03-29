@@ -62,19 +62,36 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     return null;
   }
 
-  const [result] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      isAdmin: users.isAdmin,
-    })
-    .from(sessions)
-    .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())))
-    .limit(1);
+  try {
+    const [result] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        isAdmin: users.isAdmin,
+      })
+      .from(sessions)
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())))
+      .limit(1);
 
-  return result ?? null;
+    return result ?? null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      message.includes("password authentication failed") ||
+      message.includes("authentication failed")
+    ) {
+      console.error(
+        "DB auth error in getCurrentUser - DATABASE_URL credentials are invalid. " +
+        "Update DATABASE_URL / DATABASE_URL_UNPOOLED in Vercel and redeploy.",
+        error,
+      );
+    } else {
+      console.error("DB error in getCurrentUser:", error);
+    }
+    return null;
+  }
 });
 
 export const requireUser = async (): Promise<CurrentUser> => {
