@@ -24,12 +24,18 @@ export async function GET() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown database error";
+    const isAuthError =
+      message.includes("password authentication failed") ||
+      message.includes("authentication failed");
 
     return NextResponse.json(
       {
         status: "error",
         db: "disconnected",
         message,
+        ...(isAuthError && {
+          hint: "DATABASE_URL credentials are invalid. Update DATABASE_URL and DATABASE_URL_UNPOOLED in Vercel environment variables and redeploy.",
+        }),
       },
       { status: 500 }
     );
