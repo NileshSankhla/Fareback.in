@@ -103,6 +103,7 @@ const AdminPage = async () => {
     merchantName: string;
     trackingStatus: "unreviewed" | "tracked" | "approved" | "deleted";
     rewardAmountInPaise: number;
+    affiliateLinkIndex: number | null;
   }> = [];
 
   try {
@@ -114,6 +115,7 @@ const AdminPage = async () => {
         merchantName: merchants.name,
         trackingStatus: clicks.trackingStatus,
         rewardAmountInPaise: clicks.rewardAmountInPaise,
+        affiliateLinkIndex: clicks.affiliateLinkIndex,
       })
       .from(clicks)
       .innerJoin(users, eq(users.id, clicks.userId))
@@ -140,6 +142,7 @@ const AdminPage = async () => {
       ...click,
       trackingStatus: "unreviewed" as const,
       rewardAmountInPaise: 0,
+      affiliateLinkIndex: null,
     }));
   }
 
@@ -182,6 +185,7 @@ const AdminPage = async () => {
     merchantName: click.merchantName,
     trackingStatus: click.trackingStatus,
     rewardAmountInPaise: click.rewardAmountInPaise,
+    affiliateLinkIndex: click.affiliateLinkIndex,
   }));
 
   return (

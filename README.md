@@ -103,19 +103,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 If Google shows `redirect_uri_mismatch`, the URI in Google Console must match exactly, including protocol (`http` vs `https`), domain, and path.
 
-### 3. Start the local database
-
-```bash
-docker compose up -d
-```
-
-### 4. Run database migrations
+### 3. Run database migrations
 
 ```bash
 bun run db:push
 ```
 
-### 5. Start the development server
+### 4. Start the development server
 
 ```bash
 bun run dev

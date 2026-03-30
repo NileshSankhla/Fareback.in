@@ -31,6 +31,7 @@ interface AdminClickItem {
   merchantName: string;
   trackingStatus: ClickStatus;
   rewardAmountInPaise: number;
+  affiliateLinkIndex: number | null;
 }
 
 interface WalletUserItem {
@@ -213,6 +214,11 @@ const AdminInteractiveSections = ({
                 <p className="text-muted-foreground">
                   {click.userEmail} | {formatDate(new Date(click.createdAt))}
                 </p>
+                {click.affiliateLinkIndex !== null && click.merchantName === "Amazon" ? (
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Affiliate Link: User{click.affiliateLinkIndex + 1}
+                  </p>
+                ) : null}
                 {click.trackingStatus === "approved" ? (
                   <p className="text-muted-foreground">
                     Reward credited: {formatPaiseAsINR(click.rewardAmountInPaise)}

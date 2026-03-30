@@ -79,6 +79,8 @@ export const clicks = pgTable("clicks", {
   rewardAmountInPaise: integer("reward_amount_in_paise").notNull().default(0),
   reviewedByAdminId: integer("reviewed_by_admin_id").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
+  affiliateLinkIndex: integer("affiliate_link_index"),
+  affiliateLinkUrl: text("affiliate_link_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("clicks_user_id_idx").on(table.userId),
@@ -184,3 +186,9 @@ export const notifications = pgTable("notifications", {
   index("notifications_is_read_idx").on(table.isRead),
   index("notifications_created_at_idx").on(table.createdAt),
 ]);
+
+export const affiliateLinkCounter = pgTable("affiliate_link_counter", {
+  id: serial("id").primaryKey(),
+  linkCount: integer("link_count").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
