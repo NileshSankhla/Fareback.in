@@ -1,123 +1,140 @@
 import Image from "next/image";
-import Link from "next/link";
-import { Instagram, Mail } from "lucide-react";
+import { Heart, Instagram, Mail } from "lucide-react";
 import FooterNavLink from "@/components/footer-nav-link";
 
 const Footer = () => {
+  const instagramUrl =
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL ||
+    "https://www.instagram.com/fareback.inn/";
+
   return (
-  <footer className="border-t border-border/40 bg-background">
-    <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <FooterNavLink href="/" className="flex items-center transition-opacity hover:opacity-80" ariaLabel="Fareback home">
+    <footer className="relative overflow-hidden border-t border-border/40 bg-background pt-16 pb-8">
+      <div className="absolute top-0 left-1/2 h-[1px] w-[80%] max-w-4xl -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
+      <div className="pointer-events-none absolute top-0 left-1/2 -z-10 h-[400px] w-[800px] -translate-x-1/2 rounded-full bg-primary/5 blur-[100px]" />
+
+      <div className="container relative z-10 mx-auto px-4">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-12 lg:gap-8">
+          <div className="space-y-6 md:col-span-12 lg:col-span-6">
+            <FooterNavLink
+              href="/"
+              className="inline-block transition-transform hover:scale-105"
+              ariaLabel="Fareback home"
+            >
             <Image
               src="/brand-name-dark.svg"
               alt="Fareback"
               width={164}
               height={64}
-              className="h-9 w-auto dark:hidden"
+              className="h-10 w-auto dark:hidden"
             />
             <Image
               src="/brand-name-light.svg"
               alt="Fareback"
               width={164}
               height={64}
-              className="hidden h-9 w-auto dark:block"
+              className="hidden h-10 w-auto dark:block"
             />
           </FooterNavLink>
-          <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
+
+          <p className="max-w-md text-base leading-relaxed text-muted-foreground">
             India&apos;s trusted cashback platform. Shop from top brands,
-            earn guaranteed rewards, and withdraw via UPI.
+            earn guaranteed rewards, and withdraw seamlessly via UPI.
           </p>
-          <div className="mt-6 flex gap-4">
-            <Link
-              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/fareback.inn/"}
+
+          <div className="flex gap-4 pt-2">
+            <a
+              href={instagramUrl}
               aria-label="Follow us on Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-primary"
+              className="group flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
             >
-              <Instagram className="h-5 w-5" />
-            </Link>
+              <Instagram className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+            </a>
             <a
               href="mailto:support@fareback.in"
               aria-label="Email Support"
-              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary text-sm"
+              className="group flex items-center gap-2 rounded-full border border-border/50 bg-background/50 px-4 py-2 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
             >
-              <Mail className="h-5 w-5" />
-              <span>Support</span>
+              <Mail className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+              <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                Support
+              </span>
             </a>
           </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-semibold mb-4">Platform</h3>
-          <ul className="space-y-3 text-sm text-muted-foreground">
+        <div className="md:col-span-6 lg:col-span-3">
+          <h3 className="mb-6 text-base font-bold text-foreground">Platform</h3>
+          <ul className="space-y-4 text-sm text-muted-foreground">
             <li>
               <FooterNavLink
                 href="/#offers"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                Cashback Offers
+                <span className="transition-transform group-hover:translate-x-1">Cashback Offers</span>
               </FooterNavLink>
             </li>
             <li>
               <FooterNavLink
                 href="/#how-it-works"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                How It Works
+                <span className="transition-transform group-hover:translate-x-1">How It Works</span>
               </FooterNavLink>
             </li>
             <li>
               <FooterNavLink
                 href="/#faq"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                FAQs
+                <span className="transition-transform group-hover:translate-x-1">FAQs</span>
               </FooterNavLink>
             </li>
           </ul>
         </div>
 
-        <div>
-          <h3 className="text-sm font-semibold mb-4">Legal</h3>
-          <ul className="space-y-3 text-sm text-muted-foreground">
+        <div className="md:col-span-6 lg:col-span-3">
+          <h3 className="mb-6 text-base font-bold text-foreground">Legal</h3>
+          <ul className="space-y-4 text-sm text-muted-foreground">
             <li>
               <FooterNavLink
                 href="/privacy"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                Privacy Policy
+                <span className="transition-transform group-hover:translate-x-1">Privacy Policy</span>
               </FooterNavLink>
             </li>
             <li>
               <FooterNavLink
                 href="/terms"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                Terms and Conditions
+                <span className="transition-transform group-hover:translate-x-1">Terms &amp; Conditions</span>
               </FooterNavLink>
             </li>
             <li>
               <FooterNavLink
                 href="/affiliate-rates"
-                className="transition-colors hover:text-foreground"
+                className="group inline-flex items-center transition-colors hover:text-primary"
               >
-                *Cashback Rates
+                <span className="transition-transform group-hover:translate-x-1">*Cashback Rates</span>
               </FooterNavLink>
             </li>
           </ul>
         </div>
       </div>
 
-      <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
-        <p>
+      <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 sm:flex-row">
+        <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Fareback. All rights reserved.
+        </p>
+        <p className="flex items-center text-sm text-muted-foreground">
+          Built with <Heart className="mx-1.5 h-4 w-4 animate-pulse text-destructive" /> for smart shoppers
         </p>
       </div>
     </div>
-  </footer>
+    </footer>
   );
 };
 

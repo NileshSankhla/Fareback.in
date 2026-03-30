@@ -1,7 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  ExternalLink,
+  ShieldCheck,
+  ShoppingCart,
+  Store,
+} from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { COMING_SOON_MERCHANT_NAMES, getMerchantById } from "@/lib/data/merchants";
+
+const activeBrandConfig: Record<
+  string,
+  { brandColor: string; bgGlow: string; icon: LucideIcon }
+> = {
+  amazon: {
+    brandColor: "text-orange-500",
+    bgGlow: "bg-orange-500/10",
+    icon: ShoppingCart,
+  },
+};
 
 interface MerchantsPageProps {
   searchParams: Promise<{ merchantId?: string }>;
@@ -16,6 +35,12 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
   }
 
   let merchant = null;
+  let brandVisuals: { brandColor: string; bgGlow: string; icon: LucideIcon } = {
+    brandColor: "text-primary",
+    bgGlow: "bg-primary/10",
+    icon: Store,
+  };
+
   if (params.merchantId) {
     const merchantId = parseInt(params.merchantId, 10);
     if (!isNaN(merchantId)) {
@@ -26,75 +51,102 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
         if (COMING_SOON_MERCHANT_NAMES.has(merchantSlug)) {
           redirect(`/coming-soon/${merchantSlug}`);
         }
+
+        if (activeBrandConfig[merchantSlug]) {
+          brandVisuals = activeBrandConfig[merchantSlug];
+        }
       }
     }
   }
 
+  const BrandIcon = brandVisuals.icon;
+
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full text-center space-y-8">
-        <div className="space-y-4">
-          {/* Animated checkmark */}
+    <div className="relative min-h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden px-4 py-12">
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full blur-[120px] -z-10 ${brandVisuals.bgGlow} animate-pulse`}
+      />
+
+      <div className="w-full max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-background/60 p-8 text-center shadow-2xl backdrop-blur-xl md:p-10 space-y-8">
+          <div
+            className={`absolute top-0 left-0 h-1 w-full opacity-50 ${brandVisuals.bgGlow.replace("/10", "/50")}`}
+          />
+
           <div className="flex justify-center">
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className="w-24 h-24 text-primary animate-pulse"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+            <div className="relative flex h-24 w-24 items-center justify-center">
+              <div
+                className={`absolute inset-0 rounded-full border-2 border-dashed opacity-30 animate-[spin_4s_linear_infinite] ${brandVisuals.brandColor}`}
+              />
+              <div
+                className={`absolute inset-2 rounded-full border opacity-20 animate-ping ${brandVisuals.brandColor}`}
+              />
+              <div className={`relative rounded-full border bg-background p-4 shadow-sm ${brandVisuals.brandColor}`}>
+                <ShieldCheck className="h-10 w-10" />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Reward Tracking Activated
+          <div className="space-y-3">
+            <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Tracking Securely Activated
             </h1>
             <p className="text-lg text-muted-foreground">
-              Your cashback rewards are now being tracked in real-time.
+              Your session is locked. We are ready to track your cashback.
             </p>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          {merchant ? (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              You&apos;re about to shop at <strong>{merchant.name}</strong>. Click below to continue and earn up to <strong>{merchant.cashbackRate}</strong> cashback on this purchase.
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Browse our partner stores below and start earning cashback on every purchase.
-            </p>
-          )}
+          <div className="space-y-4 rounded-xl border border-border/50 bg-secondary/50 p-6 text-left">
+            {merchant ? (
+              <div className="flex items-start gap-4">
+                <div className={`rounded-lg border bg-background p-3 shadow-sm ${brandVisuals.brandColor}`}>
+                  <BrandIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Routing to {merchant.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Earn up to <strong className="text-foreground">{merchant.cashbackRate}</strong> on your purchase today.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">
+                Browse our partner stores and start earning cashback on every purchase.
+              </p>
+            )}
+          </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 pt-2">
             {merchant ? (
               <Link
                 href={`/api/redirect?merchantId=${merchant.id}`}
                 prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+                className={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl ${
+                  merchant.name.trim().toLowerCase() === "amazon"
+                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                    : "bg-primary hover:bg-primary/90"
+                }`}
               >
-                Shop at {merchant.name} Now
+                <span className="relative z-10 flex items-center">
+                  Continue to {merchant.name}
+                  <ExternalLink className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                </span>
               </Link>
             ) : null}
 
             <Link
               href="/#offers"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-6 py-3 text-base font-semibold transition-all hover:bg-accent"
+              className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-8 py-4 text-base font-semibold transition-all hover:bg-accent hover:text-accent-foreground"
             >
               Browse All Stores
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
-        </div>
 
-        <div className="pt-4 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Your rewards are tracked when you complete a purchase within 48 hours.
+          <p className="pt-4 text-xs font-medium text-muted-foreground">
+            Ensure your cart is empty before clicking to help guarantee your rewards.
           </p>
         </div>
       </div>
