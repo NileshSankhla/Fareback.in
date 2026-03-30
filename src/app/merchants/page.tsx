@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getMerchantById } from "@/lib/data/merchants";
+import { COMING_SOON_MERCHANT_NAMES, getMerchantById } from "@/lib/data/merchants";
 
 interface MerchantsPageProps {
   searchParams: Promise<{ merchantId?: string }>;
@@ -20,6 +20,13 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
     const merchantId = parseInt(params.merchantId, 10);
     if (!isNaN(merchantId)) {
       merchant = await getMerchantById(merchantId);
+
+      if (merchant) {
+        const merchantSlug = merchant.name.trim().toLowerCase();
+        if (COMING_SOON_MERCHANT_NAMES.has(merchantSlug)) {
+          redirect(`/coming-soon/${merchantSlug}`);
+        }
+      }
     }
   }
 

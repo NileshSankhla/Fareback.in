@@ -192,3 +192,18 @@ export const affiliateLinkCounter = pgTable("affiliate_link_counter", {
   linkCount: integer("link_count").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const affiliateLinks = pgTable("affiliate_links", {
+  id: serial("id").primaryKey(),
+  merchantId: integer("merchant_id")
+    .notNull()
+    .references(() => merchants.id, { onDelete: "cascade" }),
+  linkNumber: integer("link_number").notNull(),
+  url: text("url").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("affiliate_links_merchant_id_idx").on(table.merchantId),
+  index("affiliate_links_merchant_link_number_idx").on(table.merchantId, table.linkNumber),
+]);

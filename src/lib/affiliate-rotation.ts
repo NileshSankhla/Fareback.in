@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { getTotalAffiliateLinks, getAffiliateLink } from "@/lib/affiliate-links";
+import { affiliateLinks, merchants } from "@/lib/db/schema";
 import { Redis } from "@upstash/redis";
-import { sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 const REDIS_COUNTER_KEY = "affiliate:amazon:counter";
+const REDIS_LINKS_KEY = process.env.AFFILIATE_REDIS_LIST_KEY || "affiliate:amazon:links";
 
 let redisClient: Redis | null = null;
 
@@ -22,13 +23,62 @@ const getRedisClient = (): Redis | null => {
   return redisClient;
 };
 
-const linkFromCounter = (currentCount: number): { index: number; url: string } => {
-  const totalLinks = getTotalAffiliateLinks();
-  const linkIndex = (currentCount - 1 + totalLinks) % totalLinks;
+const linkFromCounter = (
+  currentCount: number,
+  totalLinks: number,
+): { index: number; linkNumber: number } => {
+  const index = (currentCount - 1 + totalLinks) % totalLinks;
   return {
-    index: linkIndex,
-    url: getAffiliateLink(linkIndex),
+    index,
+    linkNumber: index + 1,
   };
+};
+
+const getAmazonMerchantId = async (): Promise<number | null> => {
+  const [amazon] = await db
+    .select({ id: merchants.id })
+    .from(merchants)
+    .where(eq(merchants.name, "Amazon"))
+    .limit(1);
+
+  return amazon?.id ?? null;
+};
+
+const getLinksFromDatabase = async (): Promise<string[]> => {
+  const amazonMerchantId = await getAmazonMerchantId();
+  if (!amazonMerchantId) {
+    return [];
+  }
+
+  const rows = await db
+    .select({ url: affiliateLinks.url })
+    .from(affiliateLinks)
+    .where(
+      and(
+        eq(affiliateLinks.merchantId, amazonMerchantId),
+        eq(affiliateLinks.isActive, true),
+      ),
+    )
+    .orderBy(asc(affiliateLinks.linkNumber));
+
+  return rows.map((row) => row.url);
+};
+
+const getNextCountFromDbCounter = async (): Promise<number> => {
+  const result = await db.execute(sql`
+    INSERT INTO affiliate_link_counter (id, link_count, updated_at)
+    VALUES (1, 1, NOW())
+    ON CONFLICT (id) DO UPDATE
+    SET link_count = affiliate_link_counter.link_count + 1,
+        updated_at = NOW()
+    RETURNING link_count;
+  `);
+
+  if (result.rows && result.rows.length > 0) {
+    return (result.rows[0] as { link_count: number }).link_count;
+  }
+
+  return 1;
 };
 
 /**
@@ -45,39 +95,62 @@ export async function getNextAffiliateLinkIndex(): Promise<{
 
   if (redis) {
     try {
-      const currentCount = await redis.incr(REDIS_COUNTER_KEY);
-      return linkFromCounter(currentCount);
+      const totalLinks = await redis.llen(REDIS_LINKS_KEY);
+      if (typeof totalLinks === "number" && totalLinks > 0) {
+        const currentCount = await redis.incr(REDIS_COUNTER_KEY);
+        const { index } = linkFromCounter(currentCount, totalLinks);
+        const url = await redis.lindex<string>(REDIS_LINKS_KEY, index);
+
+        if (typeof url === "string" && url.length > 0) {
+          return { index, url };
+        }
+      }
+
+      console.warn("Redis affiliate link list is empty. Falling back to database list.");
     } catch (error) {
-      console.error("Upstash Redis increment failed, falling back to DB counter:", error);
+      console.error("Upstash Redis list read failed, falling back to DB list:", error);
     }
   }
 
   try {
-    const result = await db.execute(sql`
-      INSERT INTO affiliate_link_counter (id, link_count, updated_at)
-      VALUES (1, 1, NOW())
-      ON CONFLICT (id) DO UPDATE
-      SET link_count = affiliate_link_counter.link_count + 1,
-          updated_at = NOW()
-      RETURNING link_count;
-    `);
-
-    let currentCount = 1;
-    if (result.rows && result.rows.length > 0) {
-      currentCount = (result.rows[0] as { link_count: number }).link_count;
+    const links = await getLinksFromDatabase();
+    if (links.length > 0) {
+      const currentCount = redis
+        ? await redis.incr(REDIS_COUNTER_KEY)
+        : await getNextCountFromDbCounter();
+      const { index } = linkFromCounter(currentCount, links.length);
+      return {
+        index,
+        url: links[index],
+      };
     }
-    return linkFromCounter(currentCount);
-  } catch (error) {
-    console.warn("DB counter failed, falling back to timestamp-based rotation:", error);
 
-    const totalLinks = getTotalAffiliateLinks();
-    const now = Date.now();
-    const linkIndex = Math.floor(now / 1000) % totalLinks;
-    return {
-      index: linkIndex,
-      url: getAffiliateLink(linkIndex),
-    };
+    throw new Error("No affiliate links found in Redis or database.");
+  } catch (error) {
+    console.error("Failed to get rotating affiliate link:", error);
+    throw error;
   }
+}
+
+export async function getAffiliateLinkByIndex(index: number): Promise<string | null> {
+  if (index < 0) {
+    return null;
+  }
+
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const url = await redis.lindex<string>(REDIS_LINKS_KEY, index);
+      if (typeof url === "string" && url.length > 0) {
+        return url;
+      }
+    } catch {
+      // Fall through to DB fallback
+    }
+  }
+
+  const links = await getLinksFromDatabase();
+  return links[index] ?? null;
 }
 
 /**

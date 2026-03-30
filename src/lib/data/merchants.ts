@@ -13,6 +13,12 @@ export const SUPPORTED_MERCHANT_NAMES = new Set([
   "ajio",
 ]);
 
+export const COMING_SOON_MERCHANT_NAMES = new Set([
+  "flipkart",
+  "myntra",
+  "ajio",
+]);
+
 const getAllMerchantsCached = unstable_cache(
   async () => db.select().from(merchants),
   ["merchants:all"],

@@ -216,7 +216,7 @@ const AdminInteractiveSections = ({
                 </p>
                 {click.affiliateLinkIndex !== null && click.merchantName === "Amazon" ? (
                   <p className="text-sm text-blue-600 dark:text-blue-400">
-                    Affiliate Link: User{click.affiliateLinkIndex + 1}
+                    Affiliate Link Number: {click.affiliateLinkIndex + 1}
                   </p>
                 ) : null}
                 {click.trackingStatus === "approved" ? (

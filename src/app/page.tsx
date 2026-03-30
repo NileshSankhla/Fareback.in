@@ -14,7 +14,11 @@ import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 import ShopNowButton from "@/components/shop-now-button";
-import { getAllMerchants, SUPPORTED_MERCHANT_NAMES } from "@/lib/data/merchants";
+import {
+  COMING_SOON_MERCHANT_NAMES,
+  getAllMerchants,
+  SUPPORTED_MERCHANT_NAMES,
+} from "@/lib/data/merchants";
 
 type ClickTrackingStatus = "unreviewed" | "tracked" | "approved" | "deleted";
 
@@ -146,38 +150,50 @@ const Page = async () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {visibleMerchantList.map((merchant) => (
-                <a
-                  key={merchant.id}
-                  href={`/merchants?merchantId=${merchant.id}`}
-                  className="group block"
-                  aria-label={`Shop at ${merchant.name} and earn up to ${merchant.cashbackRate} cashback`}
-                >
-                  <Card className="h-full border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary/40">
-                    <CardHeader className="items-center pb-2">
-                      {merchant.logoUrl ? (
-                        <div className="mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-2 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                          <Image
-                            src={merchant.logoUrl}
-                            alt={`${merchant.name} logo`}
-                            width={48}
-                            height={48}
-                            className="object-contain"
-                          />
-                        </div>
-                      ) : null}
-                      <CardTitle className="text-center text-base font-semibold">
-                        {merchant.name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                      <CardDescription className="font-semibold text-primary text-sm">
-                        Upto 3.7% cashback*
-                      </CardDescription>
-                    </CardContent>
-                  </Card>
-                </a>
-              ))}
+              {visibleMerchantList.map((merchant) => {
+                const merchantNameKey = merchant.name.trim().toLowerCase();
+                const isComingSoon = COMING_SOON_MERCHANT_NAMES.has(merchantNameKey);
+                const merchantHref = isComingSoon
+                  ? `/coming-soon/${merchantNameKey}`
+                  : `/merchants?merchantId=${merchant.id}`;
+
+                return (
+                  <a
+                    key={merchant.id}
+                    href={merchantHref}
+                    className="group block"
+                    aria-label={
+                      isComingSoon
+                        ? `${merchant.name} is coming soon on Fareback`
+                        : `Shop at ${merchant.name} and earn up to ${merchant.cashbackRate} cashback`
+                    }
+                  >
+                    <Card className="h-full border-border/60 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary/40">
+                      <CardHeader className="items-center pb-2">
+                        {merchant.logoUrl ? (
+                          <div className="mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white p-2 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                            <Image
+                              src={merchant.logoUrl}
+                              alt={`${merchant.name} logo`}
+                              width={48}
+                              height={48}
+                              className="object-contain"
+                            />
+                          </div>
+                        ) : null}
+                        <CardTitle className="text-center text-base font-semibold">
+                          {merchant.name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-center">
+                        <CardDescription className="font-semibold text-primary text-sm">
+                          Upto 3.7% cashback*
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  </a>
+                );
+              })}
             </div>
           )}
         </div>

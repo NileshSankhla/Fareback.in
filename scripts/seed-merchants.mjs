@@ -1,4 +1,7 @@
 import { neon } from "@neondatabase/serverless";
+import { Redis } from "@upstash/redis";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -9,19 +12,14 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl);
 
+const REDIS_LINKS_KEY = process.env.AFFILIATE_REDIS_LIST_KEY || "affiliate:amazon:links";
+const REDIS_COUNTER_KEY = "affiliate:amazon:counter";
+
 const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
   .split(",")
   .map((name) => name.trim())
   .filter(Boolean);
 
-// NOTE: Testing mode: supported merchants use configured URLs and 3.7% cashback.
-// Replace these baseUrl values with your actual affiliate tracking URLs later.
-// For example:
-//   Amazon Associates: https://www.amazon.in?tag=YOUR_TAG-21
-//   Flipkart Affiliate: https://fktr.in/49T8I82
-//   Myntra: https://myntr.it/auK4aA9
-//   AJIO: https://ajiio.in/xTvzcfm
-// The system appends ?subid=<click_id> to help correlate clicks with your affiliate dashboard.
 const merchantsToSeed = [
   {
     name: "Amazon",
@@ -74,6 +72,52 @@ if (requestedMerchantNames.length > 0) {
   }
 }
 
+const parseAffiliateCsv = () => {
+  const csvPath = resolve(process.cwd(), "amazonlinks.csv");
+  const content = readFileSync(csvPath, "utf8");
+
+  const links = [];
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+
+    const value = line.replace(/^"|"$/g, "").trim();
+    if (!value || value.toLowerCase() === "url") {
+      continue;
+    }
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        links.push(parsed.toString());
+      }
+    } catch {
+      // Ignore malformed lines.
+    }
+  }
+
+  return links;
+};
+
+const syncAffiliateLinksToRedis = async (links) => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    console.log("Upstash Redis env missing; skipped Redis affiliate link sync.");
+    return;
+  }
+
+  const redis = new Redis({ url, token });
+  await redis.del(REDIS_LINKS_KEY);
+  if (links.length > 0) {
+    await redis.rpush(REDIS_LINKS_KEY, ...links);
+  }
+  await redis.set(REDIS_COUNTER_KEY, 0);
+  console.log(`Redis affiliate list synced. Key=${REDIS_LINKS_KEY}, links=${links.length}`);
+};
+
 const seed = async () => {
   try {
     const [network] = await sql`
@@ -122,9 +166,40 @@ const seed = async () => {
       insertedCount += 1;
     }
 
+    const [amazonMerchant] = await sql`
+      select id
+      from merchants
+      where lower(name) = 'amazon'
+      limit 1
+    `;
+
+    if (!amazonMerchant?.id) {
+      throw new Error("Amazon merchant not found after merchant seeding.");
+    }
+
+    const affiliateLinks = parseAffiliateCsv();
+    if (affiliateLinks.length === 0) {
+      throw new Error("No valid affiliate URLs found in amazonlinks.csv");
+    }
+
+    await sql`
+      delete from affiliate_links
+      where merchant_id = ${amazonMerchant.id}
+    `;
+
+    for (let i = 0; i < affiliateLinks.length; i += 1) {
+      await sql`
+        insert into affiliate_links (merchant_id, link_number, url, is_active)
+        values (${amazonMerchant.id}, ${i + 1}, ${affiliateLinks[i]}, true)
+      `;
+    }
+
+    await syncAffiliateLinksToRedis(affiliateLinks);
+
     console.log(
       `Merchant seed complete for ${filteredMerchants.length} merchant(s). Added ${insertedCount} merchants, updated ${updatedCount} merchants.`,
     );
+    console.log(`Affiliate links seeded: ${affiliateLinks.length}`);
   } catch (error) {
     console.error("Merchant seed failed:", error);
     process.exitCode = 1;

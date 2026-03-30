@@ -6,6 +6,9 @@ let cachedLinks: string[] | null = null;
 let cachedMtimeMs: number | null = null;
 
 const AMAZON_LINK_TEMPLATE = "https://www.amazon.in?linkCode=ll2&ref_=as_li_ss_tl";
+const AMAZON_AFFILIATE_BASE_URL =
+  process.env.AMAZON_AFFILIATE_BASE_URL ||
+  "https://www.amazon.in?&linkCode=ll2&tag=fareback-21&linkId=711b78face92a1bf8be6139d25b1f780&ref_=as_li_ss_tl";
 
 const sanitizeAmazonTag = (rawTag: string): string => {
   const normalized = rawTag
@@ -40,8 +43,8 @@ const normalizeAffiliateLink = (rawValue: string): string | null => {
     // Not a URL, treat it as an affiliate tag.
   }
 
-  // Support rows like "users1-21" by converting them to an Amazon link.
-  const url = new URL(AMAZON_LINK_TEMPLATE);
+  // Fallback only for non-URL values; full URLs from Excel are always preserved as-is.
+  const url = new URL(AMAZON_AFFILIATE_BASE_URL || AMAZON_LINK_TEMPLATE);
   url.searchParams.set("tag", sanitizeAmazonTag(value));
   return url.toString();
 };

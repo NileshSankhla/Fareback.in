@@ -2,9 +2,12 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { clicks } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { getMerchantById, SUPPORTED_MERCHANT_NAMES } from "@/lib/data/merchants";
-import { getNextAffiliateLinkIndex } from "@/lib/affiliate-rotation";
-import { getAffiliateLink } from "@/lib/affiliate-links";
+import {
+  COMING_SOON_MERCHANT_NAMES,
+  getMerchantById,
+  SUPPORTED_MERCHANT_NAMES,
+} from "@/lib/data/merchants";
+import { getAffiliateLinkByIndex, getNextAffiliateLinkIndex } from "@/lib/affiliate-rotation";
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -76,6 +79,11 @@ export async function GET(request: NextRequest) {
     }
 
     const merchantNameKey = merchant.name.trim().toLowerCase();
+    if (COMING_SOON_MERCHANT_NAMES.has(merchantNameKey)) {
+      const comingSoonUrl = new URL(`/coming-soon/${merchantNameKey}`, request.url);
+      return NextResponse.redirect(comingSoonUrl, { status: 307 });
+    }
+
     if (!SUPPORTED_MERCHANT_NAMES.has(merchantNameKey)) {
       return NextResponse.json(
         { error: "Merchant is not currently supported" },
@@ -132,7 +140,7 @@ export async function GET(request: NextRequest) {
           affiliateLinkIndex = recentClick.affiliateLinkIndex;
         } else if (recentClick.affiliateLinkIndex !== null) {
           affiliateLinkIndex = recentClick.affiliateLinkIndex;
-          affiliateLinkUrl = getAffiliateLink(recentClick.affiliateLinkIndex);
+          affiliateLinkUrl = await getAffiliateLinkByIndex(recentClick.affiliateLinkIndex);
         }
       } else if (merchantNameKey === "amazon") {
         try {
@@ -182,9 +190,11 @@ export async function GET(request: NextRequest) {
           baseUrl = testingHomepage ?? merchant.baseUrl;
         }
 
-        // Append username as subid parameter for tracking
-        const subid = user.name || user.email.split("@")[0];
-        baseUrl = appendSubidParam(baseUrl, subid);
+        if (merchantNameKey !== "amazon") {
+          // Keep subid for non-Amazon merchants where supported.
+          const subid = user.name || user.email.split("@")[0];
+          baseUrl = appendSubidParam(baseUrl, subid);
+        }
 
         destinationUrl = new URL(baseUrl);
       } catch {
