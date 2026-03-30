@@ -99,7 +99,7 @@ export async function getNextAffiliateLinkIndex(): Promise<{
       if (typeof totalLinks === "number" && totalLinks > 0) {
         const currentCount = await redis.incr(REDIS_COUNTER_KEY);
         const { index } = linkFromCounter(currentCount, totalLinks);
-        const url = await redis.lindex<string>(REDIS_LINKS_KEY, index);
+        const url = await redis.lindex(REDIS_LINKS_KEY, index);
 
         if (typeof url === "string" && url.length > 0) {
           return { index, url };
@@ -140,7 +140,7 @@ export async function getAffiliateLinkByIndex(index: number): Promise<string | n
   const redis = getRedisClient();
   if (redis) {
     try {
-      const url = await redis.lindex<string>(REDIS_LINKS_KEY, index);
+      const url = await redis.lindex(REDIS_LINKS_KEY, index);
       if (typeof url === "string" && url.length > 0) {
         return url;
       }

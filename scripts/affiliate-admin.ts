@@ -7,7 +7,6 @@
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import {
-  loadAmazonAffiliateLinks,
   getTotalAffiliateLinks,
   getAffiliateLink,
 } from "@/lib/affiliate-links";

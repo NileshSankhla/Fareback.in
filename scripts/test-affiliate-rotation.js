@@ -5,7 +5,9 @@
  * Run: node scripts/test-affiliate-rotation.js
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const http = require("http");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const https = require("https");
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
@@ -18,10 +20,7 @@ function makeRequest(url) {
     const protocol = url.startsWith("https") ? https : http;
     protocol
       .get(url, (res) => {
-        let data = "";
-        res.on("data", (chunk) => {
-          data += chunk;
-        });
+        res.on("data", () => {});
         res.on("end", () => {
           resolve({
             status: res.statusCode,
@@ -83,7 +82,7 @@ async function testAffiliateRotation() {
                   const count = (results.linkIndices.get(linkIndex) || 0) + 1;
                   results.linkIndices.set(linkIndex, count);
                 }
-              } catch (e) {
+              } catch {
                 console.warn("Could not extract link index from URL");
               }
             } else {
@@ -113,7 +112,7 @@ async function testAffiliateRotation() {
 
     // Wait for all concurrent requests
     console.log("\n⏳ Running concurrent requests...\n");
-    const allResults = await Promise.all(userPromises);
+    await Promise.all(userPromises);
 
     // Print results
     console.log("\n📊 Test Results:\n");
