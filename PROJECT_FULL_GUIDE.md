@@ -204,7 +204,7 @@ Key withdrawal statuses:
 - Brandnamewhite.svg: branding asset
 - Favicon Black.svg: branding asset
 - Favicon White.svg: branding asset
-- amazonlinks.xlsx: affiliate link source data (Amazon rotation)
+- amazonlinks.csv: affiliate link source data (Amazon rotation)
 - briefinfo.txt: project business + technical summary
 - drizzle.config.ts: drizzle-kit config and DB credentials source
 - eslint.config.mjs: eslint setup

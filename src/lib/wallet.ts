@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import {
@@ -26,14 +26,16 @@ export const ensureWalletForUser = async (userId: number) => {
   return createdWallet;
 };
 
-export const adjustWalletBalance = async (params: {
-  userId: number;
-  adminUserId?: number;
-  type: (typeof walletTransactionTypeEnum.enumValues)[number];
-  amountInPaise: number;
-  note?: string;
-  sourceClickId?: string;
-}) => {
+export const adjustWalletBalance = async (
+  params: {
+    userId: number;
+    adminUserId?: number;
+    type: (typeof walletTransactionTypeEnum.enumValues)[number];
+    amountInPaise: number;
+    note?: string;
+    sourceClickId?: string;
+  }
+) => {
   const amountInPaise = clampToPaise(params.amountInPaise);
   if (amountInPaise <= 0) {
     throw new Error("Amount must be greater than zero.");
@@ -41,23 +43,32 @@ export const adjustWalletBalance = async (params: {
 
   const wallet = await ensureWalletForUser(params.userId);
 
-  const nextBalance =
+  const nextBalanceSql =
     params.type === "credit"
-      ? wallet.balanceInPaise + amountInPaise
-      : wallet.balanceInPaise - amountInPaise;
+      ? sql`${wallets.balanceInPaise} + ${amountInPaise}`
+      : sql`${wallets.balanceInPaise} - ${amountInPaise}`;
 
-  if (nextBalance < 0) {
-    throw new Error("Insufficient wallet balance.");
-  }
+  const balanceGuard =
+    params.type === "debit"
+      ? gte(wallets.balanceInPaise, amountInPaise)
+      : undefined;
 
   const [updatedWallet] = await db
     .update(wallets)
     .set({
-      balanceInPaise: nextBalance,
+      balanceInPaise: nextBalanceSql,
       updatedAt: new Date(),
     })
-    .where(and(eq(wallets.id, wallet.id), eq(wallets.userId, params.userId)))
+    .where(
+      balanceGuard
+        ? and(eq(wallets.id, wallet.id), eq(wallets.userId, params.userId), balanceGuard)
+        : and(eq(wallets.id, wallet.id), eq(wallets.userId, params.userId)),
+    )
     .returning();
+
+  if (!updatedWallet) {
+    throw new Error("Insufficient wallet balance.");
+  }
 
   await db.insert(walletTransactions).values({
     userId: params.userId,

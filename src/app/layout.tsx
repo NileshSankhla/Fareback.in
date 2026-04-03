@@ -71,7 +71,7 @@ const RootLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => (
-  <html lang="en" suppressHydrationWarning>
+  <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
     <body className="min-h-screen bg-background font-sans antialiased">
       <Providers>
         <div className="relative flex min-h-screen flex-col">

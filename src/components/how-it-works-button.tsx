@@ -1,7 +1,5 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-
 export default function HowItWorksButton() {
   const handleClick = () => {
     const element = document.getElementById("how-it-works");

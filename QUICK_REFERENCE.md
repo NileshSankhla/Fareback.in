@@ -6,8 +6,8 @@
 # 1. Apply database migrations
 bun run db:push
 
-# 2. Verify Excel file placement
-ls -la amazonlinks.xlsx
+# 2. Verify affiliate CSV placement
+ls -la amazonlinks.csv
 # Should show file in current directory ✓
 
 # 3. Start server
@@ -45,9 +45,10 @@ Admin panel shows which link was used
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Link Loader | `src/lib/affiliate-links.ts` | Load 100 URLs from Excel |
+| Link Source | `amazonlinks.csv` | Source CSV for affiliate URLs |
 | Rotation Logic | `src/lib/affiliate-rotation.ts` | Atomic counter increment |
 | API Handler | `src/app/api/redirect/route.ts` | Serve rotating links |
+| Seed Script | `scripts/seed-merchants.mjs` | Upsert merchants and sync links to Redis/DB |
 | Admin View | `src/components/admin/...` | Show which link used |
 | Database | `affiliate_link_counter` table | Persist rotation state |
 
@@ -56,17 +57,11 @@ Admin panel shows which link was used
 ## 🔍 Monitor System
 
 ```bash
-# Check status
-bun scripts/affiliate-admin.ts status
-# Shows: total links, current index, stats
+# Seed merchants + affiliate links (Redis + DB)
+bun run db:seed
 
-# View statistics
-bun scripts/affiliate-admin.ts stats
-# Shows: which links are used most
-
-# Reset counter (if needed)
-bun scripts/affiliate-admin.ts reset
-# Counter back to 0, next click = User1
+# Verify database health endpoint
+curl -s http://127.0.0.1:3000/api/health/db
 ```
 
 ---
@@ -82,8 +77,8 @@ bun run load-test:quick
 bun run load-test:stress  
 # Simulates 200 concurrent users for 60 seconds
 
-# Custom script
-node scripts/test-affiliate-rotation.js
+# Run after server starts and while traffic is active
+# (watch /admin for affiliate link index distribution)
 ```
 
 ---
@@ -92,14 +87,15 @@ node scripts/test-affiliate-rotation.js
 
 ```
 Project Root/
-├── amazonlinks.xlsx          ← Place your 100 affiliate links here
+├── amazonlinks.csv           ← Place affiliate links here
 ├── src/lib/
-│   ├── affiliate-links.ts      ← Load Excel file
 │   └── affiliate-rotation.ts   ← Manage rotation
 ├── drizzle/
 │   ├── 0004_*.sql              ← DB columns
 │   └── 0005_*.sql              ← Counter table
-└── package.json                ← Has xlsx package
+├── scripts/
+│   └── seed-merchants.mjs      ← Sync links to Redis + DB
+└── package.json                ← Run scripts and app commands
 ```
 
 ---
@@ -113,11 +109,8 @@ const linkIndex = (currentCount - 1) % totalLinks;
 // totalLinks = number of links you have
 ```
 
-### Change Excel file name:
-Edit `src/lib/affiliate-links.ts`:
-```typescript
-const filePath = resolve(process.cwd(), "newname.xlsx");
-```
+### Change affiliate file name:
+Update the CSV read path in `scripts/seed-merchants.mjs`.
 
 ### Change rotation behavior:
 Modify rotation logic in `affiliate-rotation.ts`
@@ -129,7 +122,7 @@ Modify rotation logic in `affiliate-rotation.ts`
 
 | Issue | Fix |
 |-------|-----|
-| "No affiliate links found" | Check `amazonlinks.xlsx` exists with URLs in column A |
+| "No affiliate links found" | Check `amazonlinks.csv` exists and has non-empty URL rows |
 | Counter not incrementing | Run `bun run db:push` to apply migrations |
 | Same link every time | Use `bun run load-test:quick` to verify rotation |
 | Affiliate info not in admin | Refresh page, or check migrations with `\d clicks` |
@@ -162,7 +155,7 @@ ORDER BY count DESC LIMIT 1;
 
 ✅ **Concurrent Safe** - Database-level atomic operations  
 ✅ **Persistent** - Survives server restart  
-✅ **Fast** - <10ms per request, Excel cached  
+✅ **Fast** - Redis-first path with DB fallback  
 ✅ **Tracked** - Every link index stored with transaction  
 ✅ **Monitored** - Admin panel shows which link was used  
 ✅ **Scalable** - Works with any number of users  
@@ -173,7 +166,7 @@ ORDER BY count DESC LIMIT 1;
 
 - **SETUP_AFFILIATE_SYSTEM.md** - Setup guide
 - **AFFILIATE_SYSTEM_GUIDE.md** - Complete technical docs
-- **EXCEL_FILE_GUIDE.md** - Excel file format
+- **amazonlinks.csv** - Affiliate link source file
 - **IMPLEMENTATION_SUMMARY.md** - What was built
 - **This file** - Quick reference
 

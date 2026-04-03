@@ -39,7 +39,7 @@ const getAmazonMerchantId = async (): Promise<number | null> => {
   const [amazon] = await db
     .select({ id: merchants.id })
     .from(merchants)
-    .where(eq(merchants.name, "Amazon"))
+    .where(sql`lower(${merchants.name}) = 'amazon'`)
     .limit(1);
 
   return amazon?.id ?? null;

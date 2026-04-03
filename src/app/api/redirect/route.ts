@@ -181,13 +181,13 @@ export async function GET(request: NextRequest) {
     let affiliateLinkUrl: string | null = null;
 
     if (merchantNameKey === "amazon") {
-      if (recentClick?.affiliateLinkUrl) {
-        affiliateLinkUrl = recentClick.affiliateLinkUrl;
-        affiliateLinkIndex = recentClick.affiliateLinkIndex;
-      } else if (recentClick?.affiliateLinkIndex !== null && recentClick?.affiliateLinkIndex !== undefined) {
+      if (recentClick?.affiliateLinkIndex !== null && recentClick?.affiliateLinkIndex !== undefined) {
         affiliateLinkIndex = recentClick.affiliateLinkIndex;
         affiliateLinkUrl = await getAffiliateLinkByIndex(recentClick.affiliateLinkIndex);
       }
+
+      // Do not trust previously stored raw URLs; they can become stale after link rotations.
+      // If index resolution fails, pick from the current active link pool.
 
       if (!affiliateLinkUrl) {
         try {

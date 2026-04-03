@@ -26,7 +26,13 @@ interface WalletActionState {
 const getString = (value: FormDataEntryValue | null) =>
   typeof value === "string" ? value : "";
 
-const parseRupeesToPaise = (value: string) => Math.round(Number(value) * 100);
+const parseRupeesToPaise = (value: string) => {
+  const parts = value.split(".");
+  const rupees = parseInt(parts[0] || "0", 10) * 100;
+  const paiseStr = (parts[1] || "00").substring(0, 2).padEnd(2, "0");
+  const paise = parseInt(paiseStr, 10);
+  return rupees + paise;
+};
 
 export const createWithdrawalRequestAction = async (
   _prevState: WalletActionState,
@@ -207,33 +213,27 @@ const adminProcessWithdrawalAction = async (
     }
 
     if (validation.data.decision === "approve") {
-      const [wallet] = await db
-        .select()
-        .from(wallets)
-        .where(eq(wallets.userId, request.userId))
-        .limit(1);
+      try {
+        await adjustWalletBalance({
+          userId: request.userId,
+          adminUserId: admin.id,
+          type: "debit",
+          amountInPaise: request.amountInPaise,
+          note: `Withdrawal approved (#${request.id})`,
+        });
 
-      if (!wallet || wallet.balanceInPaise < request.amountInPaise) {
-        return { error: "User wallet does not have enough balance." };
+        await db
+          .update(withdrawalRequests)
+          .set({
+            status: "approved",
+            adminNote: validation.data.note || null,
+            processedByAdminId: admin.id,
+            processedAt: new Date(),
+          })
+          .where(eq(withdrawalRequests.id, request.id));
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Failed to approve withdrawal." };
       }
-
-      await adjustWalletBalance({
-        userId: request.userId,
-        adminUserId: admin.id,
-        type: "debit",
-        amountInPaise: request.amountInPaise,
-        note: `Withdrawal approved (#${request.id})`,
-      });
-
-      await db
-        .update(withdrawalRequests)
-        .set({
-          status: "approved",
-          adminNote: validation.data.note || null,
-          processedByAdminId: admin.id,
-          processedAt: new Date(),
-        })
-        .where(eq(withdrawalRequests.id, request.id));
 
       revalidatePath("/admin");
       revalidatePath("/dashboard");
@@ -379,24 +379,29 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
       return;
     }
 
-    await adjustWalletBalance({
-      userId: click.userId,
-      adminUserId: admin.id,
-      type: "credit",
-      amountInPaise,
-      note: `Approved reward for click ${click.id}`,
-      sourceClickId: click.id,
-    });
+    try {
+      await adjustWalletBalance({
+        userId: click.userId,
+        adminUserId: admin.id,
+        type: "credit",
+        amountInPaise,
+        note: `Approved reward for click ${click.id}`,
+        sourceClickId: click.id,
+      });
 
-    await db
-      .update(clicks)
-      .set({
-        trackingStatus: "approved",
-        rewardAmountInPaise: amountInPaise,
-        reviewedByAdminId: admin.id,
-        reviewedAt: new Date(),
-      })
-      .where(eq(clicks.id, click.id));
+      await db
+        .update(clicks)
+        .set({
+          trackingStatus: "approved",
+          rewardAmountInPaise: amountInPaise,
+          reviewedByAdminId: admin.id,
+          reviewedAt: new Date(),
+        })
+        .where(eq(clicks.id, click.id));
+    } catch (err) {
+      console.error("Transaction error in approve click:", err);
+      return;
+    }
 
     revalidatePath("/admin");
     revalidatePath("/");
@@ -439,26 +444,31 @@ export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
       return;
     }
 
-    await adjustWalletBalance({
-      userId: click.userId,
-      adminUserId: admin.id,
-      type: "debit",
-      amountInPaise: rewardTransaction.amountInPaise,
-      note: `Undo approved reward for click ${click.id}`,
-      sourceClickId: undefined,
-    });
+    try {
+      await adjustWalletBalance({
+        userId: click.userId,
+        adminUserId: admin.id,
+        type: "debit",
+        amountInPaise: rewardTransaction.amountInPaise,
+        note: `Undo approved reward for click ${click.id}`,
+        sourceClickId: undefined,
+      });
 
-    await db.delete(walletTransactions).where(eq(walletTransactions.id, rewardTransaction.id));
+      await db.delete(walletTransactions).where(eq(walletTransactions.id, rewardTransaction.id));
 
-    await db
-      .update(clicks)
-      .set({
-        trackingStatus: "tracked",
-        rewardAmountInPaise: 0,
-        reviewedByAdminId: admin.id,
-        reviewedAt: new Date(),
-      })
-      .where(eq(clicks.id, click.id));
+      await db
+        .update(clicks)
+        .set({
+          trackingStatus: "tracked",
+          rewardAmountInPaise: 0,
+          reviewedByAdminId: admin.id,
+          reviewedAt: new Date(),
+        })
+        .where(eq(clicks.id, click.id));
+    } catch (err) {
+      console.error("Transaction error in undo approve click:", err);
+      return;
+    }
 
     revalidatePath("/admin");
     revalidatePath("/");

@@ -74,6 +74,8 @@ const AdminPage = async () => {
       .select({
         usersCount: sql<number>`(select count(*)::int from users)`,
         clicksCount: sql<number>`(select count(*)::int from clicks)`,
+        unreviewedClicksCount: sql<number>`(select count(*)::int from clicks where tracking_status = 'unreviewed')`,
+        trackedClicksCount: sql<number>`(select count(*)::int from clicks where tracking_status = 'tracked')`,
         pendingWithdrawalCount: sql<number>`(select count(*)::int from withdrawal_requests where status = 'pending')`,
         totalWalletBalance: sql<number>`coalesce((select sum(balance_in_paise)::int from wallets), 0)`,
       })
@@ -83,8 +85,8 @@ const AdminPage = async () => {
     overview = {
       usersCount: fallbackOverview?.usersCount ?? 0,
       clicksCount: fallbackOverview?.clicksCount ?? 0,
-      unreviewedClicksCount: fallbackOverview?.clicksCount ?? 0,
-      trackedClicksCount: 0,
+      unreviewedClicksCount: fallbackOverview?.unreviewedClicksCount ?? 0,
+      trackedClicksCount: fallbackOverview?.trackedClicksCount ?? 0,
       pendingWithdrawalCount: fallbackOverview?.pendingWithdrawalCount ?? 0,
       totalWalletBalance: fallbackOverview?.totalWalletBalance ?? 0,
     };

@@ -112,13 +112,32 @@ const syncAffiliateLinksToRedis = async (links) => {
     return;
   }
 
-  const redis = new Redis({ url, token });
-  await redis.del(REDIS_LINKS_KEY);
-  if (links.length > 0) {
-    await redis.rpush(REDIS_LINKS_KEY, ...links);
+  try {
+    const redis = new Redis({ url, token });
+    await redis.del(REDIS_LINKS_KEY);
+    if (links.length > 0) {
+      await redis.rpush(REDIS_LINKS_KEY, ...links);
+    }
+    await redis.set(REDIS_COUNTER_KEY, 0);
+    console.log(`Redis affiliate list synced. Key=${REDIS_LINKS_KEY}, links=${links.length}`);
+
+    const stickyKeys = await redis.keys("affiliate:redirect:recent:*");
+    if (stickyKeys.length > 0) {
+      await redis.del(...stickyKeys);
+      console.log(`Cleared ${stickyKeys.length} sticky affiliate sessions.`);
+    }
+  } catch (error) {
+    console.warn("Redis affiliate sync failed; kept SQL affiliate data as source of truth:", error);
   }
-  await redis.set(REDIS_COUNTER_KEY, 0);
-  console.log(`Redis affiliate list synced. Key=${REDIS_LINKS_KEY}, links=${links.length}`);
+};
+
+const resetAffiliateLinkCounterInDb = async () => {
+  await sql`
+    insert into affiliate_link_counter (id, link_count, updated_at)
+    values (1, 0, now())
+    on conflict (id) do update
+    set link_count = 0, updated_at = now();
+  `;
 };
 
 const seed = async () => {
@@ -204,6 +223,8 @@ const seed = async () => {
         values (${amazonMerchant.id}, ${i + 1}, ${affiliateLinks[i]}, true)
       `;
     }
+
+    await resetAffiliateLinkCounterInDb();
 
     await syncAffiliateLinksToRedis(affiliateLinks);
 
