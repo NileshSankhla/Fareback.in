@@ -667,7 +667,7 @@ and Conditions, please contact us:
 Admin:
 
 -Name: Nilesh Sankhla
--Email: email@fareback.in
+-Email: admin@fareback.in
 -Response Time: Within 30 days of receiving complaint
 
 ===================================================
