@@ -203,34 +203,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // DATABASE DOUBLE-WRITE FIX: Only write if this is a fresh session
-    if (!recentClick) {
-      try {
-        await db
-          .insert(clicks)
-          .values({
-            userId: user.id,
-            merchantId,
+    // Always persist each redirect click as its own history row.
+    try {
+      await db
+        .insert(clicks)
+        .values({
+          userId: user.id,
+          merchantId,
+          affiliateLinkIndex,
+          affiliateLinkUrl,
+        })
+        .execute();
+
+      if (merchantNameKey === "amazon" && redis && affiliateLinkUrl) {
+        // Upstash auto-stringifies objects
+        await redis.set(
+          recentClickKey,
+          {
+            id: "recent",
             affiliateLinkIndex,
             affiliateLinkUrl,
-          })
-          .execute();
-
-        if (merchantNameKey === "amazon" && redis && affiliateLinkUrl) {
-          // Upstash auto-stringifies objects
-          await redis.set(
-            recentClickKey,
-            {
-              id: "recent",
-              affiliateLinkIndex,
-              affiliateLinkUrl,
-            },
-            { ex: RECENT_CLICK_TTL_SECONDS },
-          );
-        }
-      } catch (error) {
-        console.warn("Click insert failed, continuing to redirect:", error);
+          },
+          { ex: RECENT_CLICK_TTL_SECONDS },
+        );
       }
+    } catch (error) {
+      console.warn("Click insert failed, continuing to redirect:", error);
     }
 
     // RAW UNTOUCHED REDIRECT FOR AMAZON

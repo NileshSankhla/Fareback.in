@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Filter, RefreshCcw, Search, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Filter, RefreshCcw, Search, Trash2 } from "lucide-react";
 
 import {
   adminApproveClickFormAction,
@@ -76,6 +76,7 @@ const AdminInteractiveSections = ({
   const [showAllUsers, setShowAllUsers] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<"latest" | "name-asc" | "name-desc" | "wallet-asc" | "wallet-desc">("wallet-desc");
+  const [collapsedUserGroups, setCollapsedUserGroups] = useState<Record<string, boolean>>({});
 
   const [showAllClicks, setShowAllClicks] = useState(false);
   const [clickFilter, setClickFilter] = useState<"all" | ClickStatus>("unreviewed");
@@ -122,6 +123,31 @@ const AdminInteractiveSections = ({
 
   const visibleClicks = showAllClicks ? filteredClicks : filteredClicks.slice(0, 15);
 
+  const clicksGroupedByUser = useMemo(() => {
+    const grouped = new Map<string, AdminClickItem[]>();
+
+    for (const click of visibleClicks) {
+      const existing = grouped.get(click.userEmail);
+      if (existing) {
+        existing.push(click);
+      } else {
+        grouped.set(click.userEmail, [click]);
+      }
+    }
+
+    return Array.from(grouped.entries()).map(([userEmail, userClicks]) => ({
+      userEmail,
+      clicks: userClicks,
+    }));
+  }, [visibleClicks]);
+
+  const toggleUserGroup = (userEmail: string) => {
+    setCollapsedUserGroups((prev) => ({
+      ...prev,
+      [userEmail]: !(prev[userEmail] ?? true),
+    }));
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card id="recent-click-tracking" className="flex max-h-[800px] flex-col border-border/60 shadow-sm">
@@ -166,106 +192,135 @@ const AdminInteractiveSections = ({
             {visibleClicks.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No records match this filter.</div>
             ) : (
-              visibleClicks.map((click) => (
-                <div key={click.id} className="p-4 transition-colors hover:bg-muted/10">
-                  <div className="mb-2 flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{click.merchantName}</span>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusColors[click.trackingStatus]}`}
-                        >
-                          {clickStatusLabel[click.trackingStatus]}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{click.userEmail}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{formatDate(new Date(click.createdAt))}</p>
-                      {click.affiliateLinkIndex !== null ? (
-                        <p className="mt-0.5 font-mono text-[10px] text-blue-500">
-                          Link #{click.affiliateLinkIndex + 1}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
+              clicksGroupedByUser.map((group) => {
+                const isCollapsed = collapsedUserGroups[group.userEmail] ?? true;
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {click.trackingStatus === "unreviewed" ? (
-                      <>
-                        <form action={adminMarkClickTrackedFormAction} className="inline">
-                          <input type="hidden" name="clickId" value={click.id} />
-                          <Button type="submit" variant="secondary" size="sm" className="h-7 text-xs">
-                            <Check className="mr-1 h-3 w-3" /> Mark Tracked
-                          </Button>
-                        </form>
-                        <form action={adminDeleteUnreviewedClickFormAction} className="inline">
-                          <input type="hidden" name="clickId" value={click.id} />
-                          <Button
-                            type="submit"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
-                          >
-                            Delete
-                          </Button>
-                        </form>
-                      </>
-                    ) : null}
+                return (
+                  <div key={group.userEmail} className="p-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleUserGroup(group.userEmail)}
+                    className="mb-3 flex w-full items-center justify-between rounded-md border border-border/50 bg-muted/20 px-3 py-2 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                      <p className="truncate text-sm font-semibold text-foreground">{group.userEmail}</p>
+                    </div>
+                    <span className="ml-3 whitespace-nowrap text-xs font-medium text-muted-foreground">
+                      {group.clicks.length} click{group.clicks.length === 1 ? "" : "s"}
+                    </span>
+                  </button>
 
-                    {click.trackingStatus === "unreviewed" || click.trackingStatus === "tracked" ? (
-                      <form action={adminApproveClickFormAction} className="ml-auto flex items-center gap-1">
-                        <input type="hidden" name="clickId" value={click.id} />
-                        <div className="relative">
-                          <span className="absolute left-2 top-1.5 text-xs text-muted-foreground">INR</span>
-                          <Input
-                            name="amount"
-                            placeholder="0.00"
-                            inputMode="decimal"
-                            required
-                            className="h-7 w-24 pl-10 text-xs focus-visible:ring-1"
-                          />
+                  {!isCollapsed ? (
+                    <div className="space-y-2">
+                      {group.clicks.map((click) => (
+                        <div key={click.id} className="rounded-md border border-border/50 p-3 transition-colors hover:bg-muted/10">
+                        <div className="mb-2 flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground">{click.merchantName}</span>
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusColors[click.trackingStatus]}`}
+                              >
+                                {clickStatusLabel[click.trackingStatus]}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">{formatDate(new Date(click.createdAt))}</p>
+                            {click.affiliateLinkIndex !== null ? (
+                              <p className="mt-0.5 font-mono text-[10px] text-blue-500">
+                                Link #{click.affiliateLinkIndex + 1}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
-                        <Button type="submit" size="sm" className="h-7 bg-emerald-600 text-xs hover:bg-emerald-700">
-                          Approve
-                        </Button>
-                      </form>
-                    ) : null}
 
-                    {click.trackingStatus === "tracked" ? (
-                      <form action={adminUndoTrackedClickFormAction} className="inline">
-                        <input type="hidden" name="clickId" value={click.id} />
-                        <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
-                          <RefreshCcw className="mr-1 h-3 w-3" /> Undo Track
-                        </Button>
-                      </form>
-                    ) : null}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {click.trackingStatus === "unreviewed" ? (
+                            <>
+                              <form action={adminMarkClickTrackedFormAction} className="inline">
+                                <input type="hidden" name="clickId" value={click.id} />
+                                <Button type="submit" variant="secondary" size="sm" className="h-7 text-xs">
+                                  <Check className="mr-1 h-3 w-3" /> Mark Tracked
+                                </Button>
+                              </form>
+                              <form action={adminDeleteUnreviewedClickFormAction} className="inline">
+                                <input type="hidden" name="clickId" value={click.id} />
+                                <Button
+                                  type="submit"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                                >
+                                  Delete
+                                </Button>
+                              </form>
+                            </>
+                          ) : null}
 
-                    {click.trackingStatus === "approved" ? (
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                          +{formatPaiseAsINR(click.rewardAmountInPaise)}
-                        </span>
-                        <form action={adminUndoApprovedClickFormAction} className="inline">
-                          <input type="hidden" name="clickId" value={click.id} />
-                          <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
-                            <RefreshCcw className="mr-1 h-3 w-3" /> Undo Revoke
-                          </Button>
-                        </form>
+                          {click.trackingStatus === "unreviewed" || click.trackingStatus === "tracked" ? (
+                            <form action={adminApproveClickFormAction} className="ml-auto flex items-center gap-1">
+                              <input type="hidden" name="clickId" value={click.id} />
+                              <div className="relative">
+                                <span className="absolute left-2 top-1.5 text-xs text-muted-foreground">INR</span>
+                                <Input
+                                  name="amount"
+                                  placeholder="0.00"
+                                  inputMode="decimal"
+                                  required
+                                  className="h-7 w-24 pl-10 text-xs focus-visible:ring-1"
+                                />
+                              </div>
+                              <Button type="submit" size="sm" className="h-7 bg-emerald-600 text-xs hover:bg-emerald-700">
+                                Approve
+                              </Button>
+                            </form>
+                          ) : null}
+
+                          {click.trackingStatus === "tracked" ? (
+                            <form action={adminUndoTrackedClickFormAction} className="inline">
+                              <input type="hidden" name="clickId" value={click.id} />
+                              <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
+                                <RefreshCcw className="mr-1 h-3 w-3" /> Undo Track
+                              </Button>
+                            </form>
+                          ) : null}
+
+                          {click.trackingStatus === "approved" ? (
+                            <div className="flex w-full items-center justify-between">
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                +{formatPaiseAsINR(click.rewardAmountInPaise)}
+                              </span>
+                              <form action={adminUndoApprovedClickFormAction} className="inline">
+                                <input type="hidden" name="clickId" value={click.id} />
+                                <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
+                                  <RefreshCcw className="mr-1 h-3 w-3" /> Undo Revoke
+                                </Button>
+                              </form>
+                            </div>
+                          ) : null}
+
+                          {click.trackingStatus === "deleted" ? (
+                            <form action={adminRestoreDeletedClickFormAction} className="inline">
+                              <input type="hidden" name="clickId" value={click.id} />
+                              <Button type="submit" variant="outline" size="sm" className="h-7 text-xs">
+                                <RefreshCcw className="mr-1 h-3 w-3" /> Restore
+                              </Button>
+                            </form>
+                          ) : null}
+                        </div>
                       </div>
-                    ) : null}
-
-                    {click.trackingStatus === "deleted" ? (
-                      <form action={adminRestoreDeletedClickFormAction} className="inline">
-                        <input type="hidden" name="clickId" value={click.id} />
-                        <Button type="submit" variant="outline" size="sm" className="h-7 text-xs">
-                          <RefreshCcw className="mr-1 h-3 w-3" /> Restore
-                        </Button>
-                      </form>
-                    ) : null}
+                      ))}
+                    </div>
+                  ) : null}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>
