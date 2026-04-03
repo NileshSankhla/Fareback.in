@@ -95,6 +95,7 @@ const AdminPage = async () => {
       id: withdrawalRequests.id,
       amountInPaise: withdrawalRequests.amountInPaise,
       upiId: withdrawalRequests.upiId,
+      userName: users.name,
       userEmail: users.email,
     })
     .from(withdrawalRequests)

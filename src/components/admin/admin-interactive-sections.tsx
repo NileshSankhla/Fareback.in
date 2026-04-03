@@ -43,7 +43,9 @@ interface WalletUserItem {
 
 interface AdminInteractiveSectionsProps {
   usersCount: number;
+  clicksCount: number;
   unreviewedClicksCount: number;
+  trackedClicksCount: number;
   clicks: AdminClickItem[];
   usersWithWallet: WalletUserItem[];
 }
