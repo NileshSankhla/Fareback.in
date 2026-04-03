@@ -34,7 +34,7 @@ import {
   wallets,
   withdrawalRequests,
 } from "@/lib/db/schema";
-import { formatDate, formatPaiseAsINR } from "@/lib/utils";
+import { formatPaiseAsINR } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin Mission Control | Fareback",
@@ -95,9 +95,7 @@ const AdminPage = async () => {
       id: withdrawalRequests.id,
       amountInPaise: withdrawalRequests.amountInPaise,
       upiId: withdrawalRequests.upiId,
-      createdAt: withdrawalRequests.createdAt,
       userEmail: users.email,
-      userName: users.name,
     })
     .from(withdrawalRequests)
     .innerJoin(users, eq(users.id, withdrawalRequests.userId))

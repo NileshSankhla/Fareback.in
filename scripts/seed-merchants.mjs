@@ -14,6 +14,8 @@ const sql = neon(databaseUrl);
 
 const REDIS_LINKS_KEY = process.env.AFFILIATE_REDIS_LIST_KEY || "affiliate:amazon:links";
 const REDIS_COUNTER_KEY = "affiliate:amazon:counter";
+const overwriteMerchantFields =
+  String(process.env.SEED_OVERWRITE_MERCHANT_FIELDS || "false").toLowerCase() === "true";
 
 const requestedMerchantNames = (process.env.MERCHANT_NAMES ?? "")
   .split(",")
@@ -24,26 +26,26 @@ const merchantsToSeed = [
   {
     name: "Amazon",
     baseUrl:
-      "https://www.amazon.in?&linkCode=ll2&tag=fareback-21&linkId=711b78face92a1bf8be6139d25b1f780&ref_=as_li_ss_tl",
-    cashbackRate: "3.7%",
+      "https://www.amazon.in/?tag=fareback0c-21",
+    cashbackRate: "4%",
     logoUrl: "https://www.google.com/s2/favicons?domain=amazon.in&sz=64",
   },
   {
     name: "Flipkart",
-    baseUrl: "https://fktr.in/49T8I82",
-    cashbackRate: "3.7%",
+    baseUrl: "https://www.flipkart.com/",
+    cashbackRate: "x%",
     logoUrl: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=64",
   },
   {
     name: "Myntra",
-    baseUrl: "https://myntr.it/auK4aA9",
-    cashbackRate: "3.7%",
+    baseUrl: "https://www.myntra.com/",
+    cashbackRate: "x%",
     logoUrl: "https://www.google.com/s2/favicons?domain=myntra.com&sz=64",
   },
   {
     name: "AJIO",
-    baseUrl: "https://ajiio.in/xTvzcfm",
-    cashbackRate: "3.7%",
+    baseUrl: "https://www.ajio.com/",
+    cashbackRate: "x%",
     logoUrl: "https://www.google.com/s2/favicons?domain=ajio.com&sz=64",
   },
 ];
@@ -91,7 +93,8 @@ const parseAffiliateCsv = () => {
     try {
       const parsed = new URL(value);
       if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-        links.push(parsed.toString());
+        // Keep URL exactly as provided to avoid affiliate-link mutation.
+        links.push(value);
       }
     } catch {
       // Ignore malformed lines.
@@ -144,17 +147,25 @@ const seed = async () => {
       `;
 
       if (existing.length > 0) {
-        await sql`
-          update merchants
-          set
-            network_id = ${network.id},
-            base_url = ${merchant.baseUrl},
-            cashback_rate = ${merchant.cashbackRate},
-            logo_url = ${merchant.logoUrl},
-            updated_at = now()
-          where id = ${existing[0].id}
-        `;
-        updatedCount += 1;
+        if (overwriteMerchantFields) {
+          await sql`
+            update merchants
+            set
+              network_id = ${network.id},
+              base_url = ${merchant.baseUrl},
+              cashback_rate = ${merchant.cashbackRate},
+              logo_url = ${merchant.logoUrl},
+              updated_at = now()
+            where id = ${existing[0].id}
+          `;
+          updatedCount += 1;
+        } else {
+          await sql`
+            update merchants
+            set network_id = ${network.id}, updated_at = now()
+            where id = ${existing[0].id}
+          `;
+        }
         continue;
       }
 

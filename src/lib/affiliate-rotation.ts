@@ -27,7 +27,8 @@ const linkFromCounter = (
   currentCount: number,
   totalLinks: number,
 ): { index: number; linkNumber: number } => {
-  const index = (currentCount - 1 + totalLinks) % totalLinks;
+  const effectiveTotal = Math.max(1, totalLinks);
+  const index = (currentCount - 1 + effectiveTotal) % effectiveTotal;
   return {
     index,
     linkNumber: index + 1,

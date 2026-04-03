@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import { clicks, merchants } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import HeroCarousel from "@/components/hero-carousel";
+import HowItWorksButton from "@/components/how-it-works-button";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 import ShopNowButton from "@/components/shop-now-button";
 import {
@@ -49,6 +50,36 @@ const Page = async () => {
   const visibleMerchantList = merchantList.filter((merchant) =>
     SUPPORTED_MERCHANT_NAMES.has(merchant.name.trim().toLowerCase()),
   );
+  const heroPriorityMerchantNames = ["amazon", "flipkart", "myntra"];
+  const featuredHeroMerchantRecords: (typeof merchants.$inferSelect)[] = [];
+
+  for (const merchantName of heroPriorityMerchantNames) {
+    const merchant = visibleMerchantList.find(
+      (item) => item.name.trim().toLowerCase() === merchantName,
+    );
+
+    if (merchant && !featuredHeroMerchantRecords.some((item) => item.id === merchant.id)) {
+      featuredHeroMerchantRecords.push(merchant);
+    }
+  }
+
+  for (const merchant of visibleMerchantList) {
+    if (featuredHeroMerchantRecords.length >= 3) {
+      break;
+    }
+
+    if (!featuredHeroMerchantRecords.some((item) => item.id === merchant.id)) {
+      featuredHeroMerchantRecords.push(merchant);
+    }
+  }
+
+  const featuredHeroMerchants = featuredHeroMerchantRecords.slice(0, 3).map((merchant) => ({
+    id: merchant.id,
+    name: merchant.name,
+    cashbackRate: merchant.cashbackRate,
+    href: `/merchants?merchantId=${merchant.id}`,
+  }));
+
   const defaultFavoritePlatform =
     visibleMerchantList
       .slice()
@@ -100,11 +131,45 @@ const Page = async () => {
     }
   }
 
+  const marqueeItems =
+    featuredHeroMerchants.length > 0
+      ? featuredHeroMerchants.map((merchant) => ({ name: merchant.name, rate: merchant.cashbackRate }))
+      : [
+          { name: "Amazon", rate: "Up to 5.0%" },
+          { name: "Flipkart", rate: "Up to 3.7%" },
+          { name: "Myntra", rate: "Up to 4.0%" },
+          { name: "AJIO", rate: "Up to 6.0%" },
+          { name: "Croma", rate: "Up to 2.5%" },
+        ];
+
+  const repeatedMarqueeItems = [...marqueeItems, ...marqueeItems];
+
   return (
     <div className="flex min-h-screen flex-col overflow-hidden">
       <section className="relative overflow-hidden border-b border-border/40 pt-32 pb-24 sm:pt-40 sm:pb-32">
-        <div className="pointer-events-none absolute top-0 left-1/2 h-[500px] w-[1000px] -translate-x-1/2 opacity-30">
-          <div className="absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/30 blur-[120px] animate-pulse" />
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-x-0 top-8 h-24 overflow-hidden opacity-35 sm:top-12 sm:h-32 sm:opacity-40">
+            <div className="animate-marquee flex w-max whitespace-nowrap will-change-transform">
+              {repeatedMarqueeItems.map((item, index) => (
+                <span
+                  key={`${item.name}-${index}`}
+                  className="mx-4 inline-flex items-center gap-3 text-2xl font-black tracking-tight text-transparent sm:text-4xl"
+                >
+                  <span className="bg-gradient-to-r from-foreground/25 via-foreground/18 to-foreground/8 bg-clip-text dark:from-muted-foreground/35 dark:via-muted-foreground/22 dark:to-muted-foreground/10">
+                    {item.name}
+                  </span>
+                  <span className="text-xs font-semibold text-primary/45 dark:text-primary/50 sm:text-sm">
+                    {item.rate}
+                  </span>
+                  <span className="text-primary/25 dark:text-primary/30">•</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="absolute top-0 left-1/2 h-[500px] w-[1000px] -translate-x-1/2 opacity-30">
+            <div className="absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/30 blur-[120px] animate-pulse" />
+          </div>
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center">
@@ -139,32 +204,31 @@ const Page = async () => {
                 </Link>
               )}
 
-              <Link
-                href="#how-it-works"
-                className="inline-flex w-full items-center justify-center rounded-xl border-2 border-border bg-background/50 px-8 py-4 text-base font-semibold backdrop-blur-sm transition-all hover:scale-105 hover:bg-accent hover:text-accent-foreground sm:w-auto"
-              >
-                See How It Works
-              </Link>
+              <HowItWorksButton />
             </div>
 
-            <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 pt-12 opacity-80 sm:grid-cols-3">
-              <div className="flex items-center justify-center gap-2 text-sm font-medium">
-                <Zap className="h-4 w-4 text-primary" /> Seamless Tracking
+            <div className="mx-auto max-w-3xl gap-2 pt-8 opacity-80 flex flex-wrap items-center justify-center sm:gap-4 sm:pt-12">
+              <div className="flex items-center justify-center gap-1 text-xs font-medium sm:text-sm">
+                <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="hidden sm:inline">Seamless Tracking</span>
+                <span className="sm:hidden">Seamless Tracking</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm font-medium">
-                <ShieldCheck className="h-4 w-4 text-primary" /> 100% Secure UPI
+              <span className="text-muted-foreground text-xs sm:text-sm">•</span>
+              <div className="flex items-center justify-center gap-1 text-xs font-medium sm:text-sm">
+                <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="hidden sm:inline">100% Secure UPI Payouts</span>
+                <span className="sm:hidden">Secure UPI Payouts</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm font-medium">
-                <TrendingUp className="h-4 w-4 text-primary" /> Highest Rates
+              <span className="text-muted-foreground text-xs sm:text-sm">•</span>
+              <div className="flex items-center justify-center gap-1 text-xs font-medium sm:text-sm">
+                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="hidden sm:inline">Highest Cashback Rates</span>
+                <span className="sm:hidden">Highest Cashback Rates</span>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      <div id="how-it-works" className="relative z-20 bg-background">
-        <HeroCarousel favoritePlatform={favoritePlatform} />
-      </div>
 
       <section id="offers" className="relative border-y border-border/40 bg-muted/10 py-24">
         <div className="container mx-auto px-4">
@@ -275,6 +339,10 @@ const Page = async () => {
           </div>
         </div>
       </section>
+
+      <div id="how-it-works" className="relative z-20 bg-background">
+        <HeroCarousel favoritePlatform={favoritePlatform} />
+      </div>
 
       <section id="faq" className="relative overflow-hidden bg-muted/5 py-24">
         <div className="container relative z-10 mx-auto max-w-4xl px-4">

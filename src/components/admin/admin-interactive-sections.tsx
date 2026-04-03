@@ -43,9 +43,7 @@ interface WalletUserItem {
 
 interface AdminInteractiveSectionsProps {
   usersCount: number;
-  clicksCount: number;
   unreviewedClicksCount: number;
-  trackedClicksCount: number;
   clicks: AdminClickItem[];
   usersWithWallet: WalletUserItem[];
 }
@@ -69,9 +67,7 @@ const clickStatusLabel: Record<ClickStatus, string> = {
 };
 
 const AdminInteractiveSections = ({
-  clicksCount,
   unreviewedClicksCount,
-  trackedClicksCount,
   clicks,
   usersWithWallet,
 }: AdminInteractiveSectionsProps) => {

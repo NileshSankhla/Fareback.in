@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
-  ExternalLink,
   ShieldCheck,
   ShoppingCart,
   Store,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { COMING_SOON_MERCHANT_NAMES, getMerchantById } from "@/lib/data/merchants";
+import TrackingRedirectButton from "@/components/tracking-redirect-button";
 
 const activeBrandConfig: Record<
   string,
@@ -120,20 +120,11 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
 
           <div className="flex flex-col gap-3 pt-2">
             {merchant ? (
-              <Link
-                href={`/api/redirect?merchantId=${merchant.id}`}
-                prefetch={false}
-                className={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl ${
-                  merchant.name.trim().toLowerCase() === "amazon"
-                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-              >
-                <span className="relative z-10 flex items-center">
-                  Continue to {merchant.name}
-                  <ExternalLink className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </span>
-              </Link>
+              <TrackingRedirectButton
+                merchantId={merchant.id}
+                merchantName={merchant.name}
+                isAmazon={merchant.name.trim().toLowerCase() === "amazon"}
+              />
             ) : null}
 
             <Link
