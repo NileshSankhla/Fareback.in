@@ -55,6 +55,30 @@ const isUniqueConstraintError = (error: unknown) =>
   && "code" in error
   && (error as { code?: string }).code === "23505";
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const eventLike = error as { message?: unknown; error?: unknown; cause?: unknown };
+
+    if (typeof eventLike.message === "string" && eventLike.message.length > 0) {
+      return eventLike.message;
+    }
+
+    if (eventLike.error instanceof Error && eventLike.error.message) {
+      return eventLike.error.message;
+    }
+
+    if (typeof eventLike.cause === "string" && eventLike.cause.length > 0) {
+      return eventLike.cause;
+    }
+  }
+
+  return "Failed to update wallet. Please try again.";
+};
+
 export const createWithdrawalRequestAction = async (
   _prevState: WalletActionState,
   formData: FormData,
@@ -251,12 +275,9 @@ export const adminAdjustWalletAction = async (
 
     return { success: `Wallet updated successfully. ${validation.data.type === "credit" ? "+" : "-"}${validation.data.amount} ${validation.data.walletType === "cashback" ? "Cashback" : "Amazon Rewards"}.` };
   } catch (error) {
-    console.error("Admin wallet adjust error:", error);
+    console.error("Admin wallet adjust error:", { message: getErrorMessage(error) });
     return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to update wallet. Please try again.",
+      error: getErrorMessage(error),
     };
   }
 };

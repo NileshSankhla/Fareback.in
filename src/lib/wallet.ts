@@ -18,6 +18,143 @@ const isUniqueConstraintError = (error: unknown) =>
   && "code" in error
   && (error as { code?: string }).code === "23505";
 
+const collectErrorText = (error: unknown): string => {
+  if (error instanceof Error) {
+    return `${error.message} ${error.stack ?? ""}`;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (typeof error !== "object" || error === null) {
+    return String(error);
+  }
+
+  const eventLike = error as {
+    message?: unknown;
+    stack?: unknown;
+    type?: unknown;
+    error?: unknown;
+    cause?: unknown;
+  };
+
+  const parts = [
+    typeof eventLike.message === "string" ? eventLike.message : "",
+    typeof eventLike.stack === "string" ? eventLike.stack : "",
+    typeof eventLike.type === "string" ? eventLike.type : "",
+  ];
+
+  if (eventLike.error !== undefined) {
+    parts.push(collectErrorText(eventLike.error));
+  }
+
+  if (eventLike.cause !== undefined) {
+    parts.push(collectErrorText(eventLike.cause));
+  }
+
+  return parts.filter(Boolean).join(" ");
+};
+
+const isTransactionTransportError = (error: unknown) => {
+  const details = collectErrorText(error).toLowerCase();
+
+  return (
+    details.includes("no transactions support in neon-http driver")
+    || details.includes("unexpected server response: 101")
+    || details.includes("websocket")
+  );
+};
+
+const adjustWalletBalanceWithAtomicCte = async (
+  params: {
+    userId: number;
+    adminUserId?: number;
+    walletType: WalletType;
+    type: (typeof walletTransactionTypeEnum.enumValues)[number];
+    amountInPaise: number;
+    note?: string;
+    sourceClickId?: string;
+  },
+  walletId: number,
+) => {
+  const nextBalanceSql =
+    params.type === "credit"
+      ? sql`${wallets.balanceInPaise} + ${params.amountInPaise}`
+      : sql`${wallets.balanceInPaise} - ${params.amountInPaise}`;
+
+  const debitGuardSql =
+    params.type === "debit"
+      ? sql`and ${wallets.balanceInPaise} >= ${params.amountInPaise}`
+      : sql``;
+
+  try {
+    const updateAndInsertResult = await db.execute(sql`
+      with updated_wallet as (
+        update wallets
+        set
+          balance_in_paise = ${nextBalanceSql},
+          updated_at = now()
+        where
+          id = ${walletId}
+          and user_id = ${params.userId}
+          and wallet_type = ${params.walletType}
+          ${debitGuardSql}
+        returning id
+      ),
+      inserted_transaction as (
+        insert into wallet_transactions (
+          user_id,
+          admin_user_id,
+          wallet_type,
+          type,
+          amount_in_paise,
+          note,
+          source_click_id
+        )
+        select
+          ${params.userId},
+          ${params.adminUserId ?? null},
+          ${params.walletType},
+          ${params.type},
+          ${params.amountInPaise},
+          ${params.note ?? null},
+          ${params.sourceClickId ?? null}
+        from updated_wallet
+        returning id
+      )
+      select id from updated_wallet;
+    `);
+
+    if (!updateAndInsertResult.rows || updateAndInsertResult.rows.length === 0) {
+      throw new Error("Insufficient wallet balance.");
+    }
+  } catch (error) {
+    if (params.sourceClickId && isUniqueConstraintError(error)) {
+      throw new Error("Reward already processed for this click.");
+    }
+    throw error;
+  }
+
+  const [updatedWallet] = await db
+    .select()
+    .from(wallets)
+    .where(
+      and(
+        eq(wallets.id, walletId),
+        eq(wallets.userId, params.userId),
+        eq(wallets.walletType, params.walletType),
+      ),
+    )
+    .limit(1);
+
+  if (!updatedWallet) {
+    throw new Error("Wallet update committed but refresh failed.");
+  }
+
+  return updatedWallet;
+};
+
 export type WalletType = (typeof walletTypeEnum.enumValues)[number];
 
 export const DEFAULT_WALLET_TYPE: WalletType = "cashback";
@@ -95,50 +232,65 @@ export const adjustWalletBalance = async (
       ? gte(wallets.balanceInPaise, amountInPaise)
       : undefined;
 
-  return db.transaction(async (tx) => {
-    const [updatedWallet] = await tx
-      .update(wallets)
-      .set({
-        balanceInPaise: nextBalanceSql,
-        updatedAt: new Date(),
-      })
-      .where(
-        balanceGuard
-          ? and(
-              eq(wallets.id, wallet.id),
-              eq(wallets.userId, params.userId),
-              eq(wallets.walletType, walletType),
-              balanceGuard,
-            )
-          : and(
-              eq(wallets.id, wallet.id),
-              eq(wallets.userId, params.userId),
-              eq(wallets.walletType, walletType),
-            ),
-      )
-      .returning();
+  try {
+    return await db.transaction(async (tx) => {
+      const [updatedWallet] = await tx
+        .update(wallets)
+        .set({
+          balanceInPaise: nextBalanceSql,
+          updatedAt: new Date(),
+        })
+        .where(
+          balanceGuard
+            ? and(
+                eq(wallets.id, wallet.id),
+                eq(wallets.userId, params.userId),
+                eq(wallets.walletType, walletType),
+                balanceGuard,
+              )
+            : and(
+                eq(wallets.id, wallet.id),
+                eq(wallets.userId, params.userId),
+                eq(wallets.walletType, walletType),
+              ),
+        )
+        .returning();
 
-    if (!updatedWallet) {
-      throw new Error("Insufficient wallet balance.");
-    }
-
-    try {
-      await tx.insert(walletTransactions).values({
-        userId: params.userId,
-        adminUserId: params.adminUserId,
-        walletType,
-        type: params.type,
-        amountInPaise,
-        note: params.note,
-        sourceClickId: params.sourceClickId,
-      });
-    } catch (error) {
-      if (params.sourceClickId && isUniqueConstraintError(error)) {
-        throw new Error("Reward already processed for this click.");
+      if (!updatedWallet) {
+        throw new Error("Insufficient wallet balance.");
       }
+
+      try {
+        await tx.insert(walletTransactions).values({
+          userId: params.userId,
+          adminUserId: params.adminUserId,
+          walletType,
+          type: params.type,
+          amountInPaise,
+          note: params.note,
+          sourceClickId: params.sourceClickId,
+        });
+      } catch (error) {
+        if (params.sourceClickId && isUniqueConstraintError(error)) {
+          throw new Error("Reward already processed for this click.");
+        }
+        throw error;
+      }
+
+      return updatedWallet;
+    });
+  } catch (error) {
+    if (!isTransactionTransportError(error)) {
       throw error;
     }
 
-    return updatedWallet;
-  });
+    return adjustWalletBalanceWithAtomicCte(
+      {
+        ...params,
+        walletType,
+        amountInPaise,
+      },
+      wallet.id,
+    );
+  }
 };

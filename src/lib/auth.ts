@@ -78,6 +78,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     return result ?? null;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const causeMessage =
+      typeof error === "object" && error !== null && "cause" in error
+        ? String((error as { cause?: unknown }).cause)
+        : undefined;
+
     if (
       message.includes("password authentication failed") ||
       message.includes("authentication failed")
@@ -85,10 +90,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       console.error(
         "DB auth error in getCurrentUser - DATABASE_URL credentials are invalid. " +
         "Update DATABASE_URL / DATABASE_URL_UNPOOLED in Vercel and redeploy.",
-        error,
+        { message, cause: causeMessage },
       );
     } else {
-      console.error("DB error in getCurrentUser:", error);
+      console.error("DB error in getCurrentUser:", { message, cause: causeMessage });
     }
     return null;
   }
