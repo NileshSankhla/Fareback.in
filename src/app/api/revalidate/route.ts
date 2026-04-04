@@ -14,9 +14,27 @@ const secureEqual = (a: string, b: string) => {
   return timingSafeEqual(aBuffer, bBuffer);
 };
 
-export async function GET(request: NextRequest) {
+export async function GET() {
+  return NextResponse.json({ message: "Method not allowed" }, { status: 405 });
+}
+
+const getRequestSecret = (request: NextRequest) => {
+  const headerSecret = request.headers.get("x-revalidate-secret");
+  if (headerSecret) {
+    return headerSecret;
+  }
+
+  const authorization = request.headers.get("authorization");
+  if (authorization?.startsWith("Bearer ")) {
+    return authorization.slice(7).trim();
+  }
+
+  return null;
+};
+
+export async function POST(request: NextRequest) {
   const configuredSecret = process.env.CRON_SECRET;
-  const secret = request.nextUrl.searchParams.get("secret");
+  const secret = getRequestSecret(request);
 
   if (!configuredSecret || !secret || !secureEqual(secret, configuredSecret)) {
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });

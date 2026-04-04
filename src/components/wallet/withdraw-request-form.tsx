@@ -5,12 +5,13 @@ import { useFormStatus } from "react-dom";
 import { ArrowRight, Landmark } from "lucide-react";
 
 import {
+  createAmazonGiftCardRequestAction,
   createWithdrawalRequestAction,
 } from "@/app/actions/wallet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SubmitButton = () => {
+const SubmitButton = ({ isAmazonRewards }: { isAmazonRewards: boolean }) => {
   const { pending } = useFormStatus();
 
   return (
@@ -20,10 +21,11 @@ const SubmitButton = () => {
       disabled={pending}
     >
       {pending ? (
-        "Processing Request..."
+        isAmazonRewards ? "Processing Gift Card Request..." : "Processing Request..."
       ) : (
         <>
-          Request Secure Withdrawal <ArrowRight className="ml-2 h-5 w-5" />
+          {isAmazonRewards ? "Request Amazon Gift Card" : "Request Secure Withdrawal"}
+          <ArrowRight className="ml-2 h-5 w-5" />
         </>
       )}
     </Button>
@@ -32,11 +34,14 @@ const SubmitButton = () => {
 
 interface WithdrawRequestFormProps {
   hasPendingRequest: boolean;
+  walletType?: "cashback" | "amazon_rewards";
 }
 
-const WithdrawRequestForm = ({ hasPendingRequest }: WithdrawRequestFormProps) => {
+const WithdrawRequestForm = ({ hasPendingRequest, walletType = "cashback" }: WithdrawRequestFormProps) => {
+  const isAmazonRewards = walletType === "amazon_rewards";
+  const destinationFieldId = isAmazonRewards ? "amazon-reward-destination" : "upiId";
   const [state, formAction] = useActionState(
-    createWithdrawalRequestAction,
+    isAmazonRewards ? createAmazonGiftCardRequestAction : createWithdrawalRequestAction,
     {},
   );
 
@@ -44,21 +49,32 @@ const WithdrawRequestForm = ({ hasPendingRequest }: WithdrawRequestFormProps) =>
     <form action={formAction} className="space-y-5">
       <div className="space-y-2">
         <label
-          htmlFor="upiId"
+          htmlFor={destinationFieldId}
           className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground"
         >
-          <Landmark className="h-4 w-4" /> Destination UPI ID
+          <Landmark className="h-4 w-4" />
+          {isAmazonRewards ? "Amazon account email" : "Destination UPI ID"}
         </label>
-        <Input
-          id="upiId"
-          name="upiId"
-          placeholder="yourname@okaxis"
-          autoComplete="off"
-          required
-          disabled={hasPendingRequest}
-          className="h-12 text-base focus-visible:ring-primary/50"
-        />
-        {state.fieldErrors?.upiId?.[0] ? (
+        {isAmazonRewards ? (
+          <Input
+            id={destinationFieldId}
+            value="Amazon gift card will be issued to your registered email"
+            readOnly
+            disabled
+            className="h-12 text-base focus-visible:ring-primary/50"
+          />
+        ) : (
+          <Input
+            id="upiId"
+            name="upiId"
+            placeholder="yourname@okaxis"
+            autoComplete="off"
+            required
+            disabled={hasPendingRequest}
+            className="h-12 text-base focus-visible:ring-primary/50"
+          />
+        )}
+        {!isAmazonRewards && state.fieldErrors?.upiId?.[0] ? (
           <p className="text-sm font-medium text-destructive">{state.fieldErrors.upiId[0]}</p>
         ) : null}
       </div>
@@ -68,7 +84,7 @@ const WithdrawRequestForm = ({ hasPendingRequest }: WithdrawRequestFormProps) =>
           htmlFor="amount"
           className="text-sm font-bold uppercase tracking-wide text-muted-foreground"
         >
-          Withdrawal Amount
+          {isAmazonRewards ? "Reward Amount" : "Withdrawal Amount"}
         </label>
         <div className="relative">
           <span className="absolute left-4 top-3 text-lg font-medium text-muted-foreground">INR</span>
@@ -89,7 +105,9 @@ const WithdrawRequestForm = ({ hasPendingRequest }: WithdrawRequestFormProps) =>
 
       {hasPendingRequest ? (
         <p className="rounded-lg border border-border/50 bg-secondary/50 p-3 text-center text-sm font-medium text-muted-foreground">
-          You have an active withdrawal in progress.
+          {isAmazonRewards
+            ? "You have an active Amazon gift card request in progress."
+            : "You have an active withdrawal in progress."}
         </p>
       ) : null}
 
@@ -98,7 +116,7 @@ const WithdrawRequestForm = ({ hasPendingRequest }: WithdrawRequestFormProps) =>
         <p className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">{state.success}</p>
       ) : null}
 
-      <SubmitButton />
+      <SubmitButton isAmazonRewards={isAmazonRewards} />
     </form>
   );
 };

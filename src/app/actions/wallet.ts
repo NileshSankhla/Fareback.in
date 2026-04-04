@@ -1,18 +1,33 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { requireAdminUser } from "@/lib/admin";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { clicks, users, wallets, walletTransactions, withdrawalRequests } from "@/lib/db/schema";
-import { adjustWalletBalance, ensureWalletForUser } from "@/lib/wallet";
 import {
+  amazonGiftCardRequests,
+  clicks,
+  merchants,
+  users,
+  walletTransactions,
+  withdrawalRequests,
+} from "@/lib/db/schema";
+import {
+  AMAZON_REWARDS_WALLET_TYPE,
+  DEFAULT_WALLET_TYPE,
+  adjustWalletBalance,
+  ensureWalletForUser,
+  getWalletBalance,
+} from "@/lib/wallet";
+import {
+  adminAmazonGiftCardDecisionSchema,
   adminApproveClickSchema,
   adminDeleteClickSchema,
   adminTrackedClickSchema,
   adminWithdrawalDecisionSchema,
+  amazonGiftCardRequestSchema,
   walletAdjustmentSchema,
   withdrawalRequestSchema,
 } from "@/lib/validations/auth";
@@ -33,6 +48,12 @@ const parseRupeesToPaise = (value: string) => {
   const paise = parseInt(paiseStr, 10);
   return rupees + paise;
 };
+
+const isUniqueConstraintError = (error: unknown) =>
+  typeof error === "object"
+  && error !== null
+  && "code" in error
+  && (error as { code?: string }).code === "23505";
 
 export const createWithdrawalRequestAction = async (
   _prevState: WalletActionState,
@@ -60,15 +81,11 @@ export const createWithdrawalRequestAction = async (
       return { error: "Withdrawal amount must be greater than zero." };
     }
 
-    await ensureWalletForUser(user.id);
+    await ensureWalletForUser(user.id, DEFAULT_WALLET_TYPE);
 
-    const [wallet] = await db
-      .select({ balanceInPaise: wallets.balanceInPaise })
-      .from(wallets)
-      .where(eq(wallets.userId, user.id))
-      .limit(1);
+    const balanceInPaise = await getWalletBalance(user.id, DEFAULT_WALLET_TYPE);
 
-    if (!wallet || wallet.balanceInPaise < amountInPaise) {
+    if (balanceInPaise < amountInPaise) {
       return { error: "Insufficient wallet balance." };
     }
 
@@ -86,12 +103,19 @@ export const createWithdrawalRequestAction = async (
       return { error: "You already have a pending withdrawal request." };
     }
 
-    await db.insert(withdrawalRequests).values({
-      userId: user.id,
-      upiId: validation.data.upiId.toLowerCase(),
-      amountInPaise,
-      status: "pending",
-    });
+    try {
+      await db.insert(withdrawalRequests).values({
+        userId: user.id,
+        upiId: validation.data.upiId.toLowerCase(),
+        amountInPaise,
+        status: "pending",
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        return { error: "You already have a pending withdrawal request." };
+      }
+      throw error;
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/admin");
@@ -100,6 +124,76 @@ export const createWithdrawalRequestAction = async (
   } catch (error) {
     console.error("Create withdrawal request error:", error);
     return { error: "Failed to submit withdrawal request. Please try again." };
+  }
+};
+
+export const createAmazonGiftCardRequestAction = async (
+  _prevState: WalletActionState,
+  formData: FormData,
+): Promise<WalletActionState> => {
+  try {
+    const user = await requireUser();
+
+    const payload = {
+      amount: getString(formData.get("amount")),
+    };
+
+    const validation = amazonGiftCardRequestSchema.safeParse(payload);
+    if (!validation.success) {
+      return {
+        error: "Please correct the highlighted fields.",
+        fieldErrors: validation.error.flatten().fieldErrors,
+      };
+    }
+
+    const amountInPaise = parseRupeesToPaise(validation.data.amount);
+
+    if (amountInPaise <= 0) {
+      return { error: "Gift card conversion amount must be greater than zero." };
+    }
+
+    await ensureWalletForUser(user.id, AMAZON_REWARDS_WALLET_TYPE);
+
+    const balanceInPaise = await getWalletBalance(user.id, AMAZON_REWARDS_WALLET_TYPE);
+
+    if (balanceInPaise < amountInPaise) {
+      return { error: "Insufficient Amazon rewards balance." };
+    }
+
+    const [pendingCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(amazonGiftCardRequests)
+      .where(
+        and(
+          eq(amazonGiftCardRequests.userId, user.id),
+          eq(amazonGiftCardRequests.status, "pending"),
+        ),
+      );
+
+    if ((pendingCount?.count ?? 0) > 0) {
+      return { error: "You already have a pending Amazon gift card request." };
+    }
+
+    try {
+      await db.insert(amazonGiftCardRequests).values({
+        userId: user.id,
+        amountInPaise,
+        status: "pending",
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        return { error: "You already have a pending Amazon gift card request." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+
+    return { success: "Amazon gift card request submitted successfully." };
+  } catch (error) {
+    console.error("Create Amazon gift card request error:", error);
+    return { error: "Failed to submit Amazon gift card request. Please try again." };
   }
 };
 
@@ -112,6 +206,7 @@ export const adminAdjustWalletAction = async (
 
     const payload = {
       userEmail: getString(formData.get("userEmail")).trim().toLowerCase(),
+      walletType: getString(formData.get("walletType")),
       type: getString(formData.get("type")),
       amount: getString(formData.get("amount")).trim(),
     };
@@ -127,7 +222,7 @@ export const adminAdjustWalletAction = async (
     const [targetUser] = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, validation.data.userEmail))
+      .where(ilike(users.email, validation.data.userEmail))
       .limit(1);
 
     if (!targetUser) {
@@ -136,18 +231,25 @@ export const adminAdjustWalletAction = async (
 
     const amountInPaise = parseRupeesToPaise(validation.data.amount);
 
+    if (amountInPaise <= 0) {
+      return { error: "Amount must be greater than zero." };
+    }
+
+    await ensureWalletForUser(targetUser.id, validation.data.walletType);
+
     await adjustWalletBalance({
       userId: targetUser.id,
       adminUserId: admin.id,
+      walletType: validation.data.walletType,
       type: validation.data.type,
       amountInPaise,
-      note: undefined,
+      note: `Manual ${validation.data.type === "credit" ? "credit" : "debit"} adjustment by ${admin.email}`,
     });
 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
 
-    return { success: "Wallet updated successfully." };
+    return { success: `Wallet updated successfully. ${validation.data.type === "credit" ? "+" : "-"}${validation.data.amount} ${validation.data.walletType === "cashback" ? "Cashback" : "Amazon Rewards"}.` };
   } catch (error) {
     console.error("Admin wallet adjust error:", error);
     return {
@@ -157,6 +259,150 @@ export const adminAdjustWalletAction = async (
           : "Failed to update wallet. Please try again.",
     };
   }
+};
+
+export const adminProcessAmazonGiftCardRequestAction = async (
+  _prevState: WalletActionState,
+  formData: FormData,
+): Promise<WalletActionState> => {
+  try {
+    const admin = await requireAdminUser();
+
+    const payload = {
+      requestId: getString(formData.get("requestId")),
+      decision: getString(formData.get("decision")),
+      note: getString(formData.get("note")).trim(),
+      giftCardCode: getString(formData.get("giftCardCode")).trim(),
+    };
+
+    const validation = adminAmazonGiftCardDecisionSchema.safeParse(payload);
+    if (!validation.success) {
+      return {
+        error: "Please correct the highlighted fields.",
+        fieldErrors: validation.error.flatten().fieldErrors,
+      };
+    }
+
+    const requestId = Number(validation.data.requestId);
+
+    const [request] = await db
+      .select()
+      .from(amazonGiftCardRequests)
+      .where(eq(amazonGiftCardRequests.id, requestId))
+      .limit(1);
+
+    if (!request) {
+      return { error: "Amazon gift card request not found." };
+    }
+
+    if (validation.data.decision === "reject") {
+      if (request.status === "fulfilled") {
+        return { error: "Fulfilled requests cannot be rejected." };
+      }
+      if (request.status === "rejected") {
+        return { error: "Request is already rejected." };
+      }
+
+      await db
+        .update(amazonGiftCardRequests)
+        .set({
+          status: "rejected",
+          adminNote: validation.data.note || null,
+          processedByAdminId: admin.id,
+          processedAt: new Date(),
+        })
+        .where(eq(amazonGiftCardRequests.id, request.id));
+
+      revalidatePath("/admin");
+      revalidatePath("/dashboard");
+      return { success: "Amazon gift card request rejected." };
+    }
+
+    if (validation.data.decision === "approve") {
+      if (request.status === "approved") {
+        return { success: "Amazon gift card request is already approved." };
+      }
+      if (request.status !== "pending") {
+        return { error: "Only pending requests can be approved." };
+      }
+
+      try {
+        await adjustWalletBalance({
+          userId: request.userId,
+          adminUserId: admin.id,
+          walletType: AMAZON_REWARDS_WALLET_TYPE,
+          type: "debit",
+          amountInPaise: request.amountInPaise,
+          note: `Amazon gift card request #${request.id}`,
+        });
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Failed to reserve Amazon rewards." };
+      }
+
+      await db
+        .update(amazonGiftCardRequests)
+        .set({
+          status: "approved",
+          adminNote: validation.data.note || null,
+          processedByAdminId: admin.id,
+          processedAt: new Date(),
+        })
+        .where(eq(amazonGiftCardRequests.id, request.id));
+
+      revalidatePath("/admin");
+      revalidatePath("/dashboard");
+      return { success: "Amazon gift card request approved." };
+    }
+
+    if (!validation.data.giftCardCode) {
+      return { error: "Gift card code is required to fulfill the request." };
+    }
+
+    if (request.status === "fulfilled") {
+      return { error: "Request is already fulfilled." };
+    }
+
+    if (request.status === "rejected") {
+      return { error: "Rejected requests cannot be fulfilled." };
+    }
+
+    if (request.status === "pending") {
+      try {
+        await adjustWalletBalance({
+          userId: request.userId,
+          adminUserId: admin.id,
+          walletType: AMAZON_REWARDS_WALLET_TYPE,
+          type: "debit",
+          amountInPaise: request.amountInPaise,
+          note: `Amazon gift card request #${request.id}`,
+        });
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Failed to reserve Amazon rewards." };
+      }
+    }
+
+    await db
+      .update(amazonGiftCardRequests)
+      .set({
+        status: "fulfilled",
+        giftCardCode: validation.data.giftCardCode,
+        adminNote: validation.data.note || null,
+        processedByAdminId: admin.id,
+        processedAt: new Date(),
+      })
+      .where(eq(amazonGiftCardRequests.id, request.id));
+
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    return { success: "Amazon gift card issued successfully." };
+  } catch (error) {
+    console.error("Admin process Amazon gift card request error:", error);
+    return { error: "Failed to process Amazon gift card request." };
+  }
+};
+
+export const adminProcessAmazonGiftCardRequestFormAction = async (formData: FormData) => {
+  await adminProcessAmazonGiftCardRequestAction({}, formData);
 };
 
 const adminProcessWithdrawalAction = async (
@@ -192,8 +438,16 @@ const adminProcessWithdrawalAction = async (
       return { error: "Withdrawal request not found." };
     }
 
-    if (request.status !== "pending" && validation.data.decision !== "mark-paid") {
-      return { error: "Only pending requests can be approved or rejected." };
+    if (validation.data.decision === "approve" && request.status !== "pending") {
+      return { error: "Only pending requests can be approved." };
+    }
+
+    if (validation.data.decision === "reject" && request.status !== "pending") {
+      return { error: "Only pending requests can be rejected." };
+    }
+
+    if (validation.data.decision === "mark-paid" && request.status !== "approved") {
+      return { error: "Only approved requests can be marked as paid." };
     }
 
     if (validation.data.decision === "reject") {
@@ -347,6 +601,7 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
     const payload = {
       clickId: getString(formData.get("clickId")),
       amount: getString(formData.get("amount")),
+      walletType: getString(formData.get("walletType")) || undefined,
     };
 
     const validation = adminApproveClickSchema.safeParse(payload);
@@ -379,13 +634,25 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
       return;
     }
 
+    const [merchant] = await db
+      .select({ name: merchants.name })
+      .from(merchants)
+      .where(eq(merchants.id, click.merchantId))
+      .limit(1);
+
+    const walletType = validation.data.walletType
+      ?? (merchant?.name.trim().toLowerCase() === "amazon"
+        ? AMAZON_REWARDS_WALLET_TYPE
+        : DEFAULT_WALLET_TYPE);
+
     try {
       await adjustWalletBalance({
         userId: click.userId,
         adminUserId: admin.id,
+        walletType,
         type: "credit",
         amountInPaise,
-        note: `Approved reward for click ${click.id}`,
+        note: `Approved ${walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
         sourceClickId: click.id,
       });
 
@@ -399,6 +666,12 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
         })
         .where(eq(clicks.id, click.id));
     } catch (err) {
+      if (err instanceof Error && err.message === "Reward already processed for this click.") {
+        return;
+      }
+      if (isUniqueConstraintError(err)) {
+        return;
+      }
       console.error("Transaction error in approve click:", err);
       return;
     }
@@ -435,12 +708,16 @@ export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
     }
 
     const [rewardTransaction] = await db
-      .select()
+      .select({
+        id: walletTransactions.id,
+        amountInPaise: walletTransactions.amountInPaise,
+        walletType: walletTransactions.walletType,
+      })
       .from(walletTransactions)
       .where(eq(walletTransactions.sourceClickId, click.id))
       .limit(1);
 
-    if (!rewardTransaction || rewardTransaction.type !== "credit") {
+    if (!rewardTransaction) {
       return;
     }
 
@@ -448,9 +725,10 @@ export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
       await adjustWalletBalance({
         userId: click.userId,
         adminUserId: admin.id,
+        walletType: rewardTransaction.walletType,
         type: "debit",
         amountInPaise: rewardTransaction.amountInPaise,
-        note: `Undo approved reward for click ${click.id}`,
+        note: `Undo approved ${rewardTransaction.walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
         sourceClickId: undefined,
       });
 

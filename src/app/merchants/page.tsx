@@ -92,7 +92,7 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
               Tracking Securely Activated
             </h1>
             <p className="text-lg text-muted-foreground">
-              Your session is locked. We are ready to track your cashback.
+              Your session is locked. We are ready to track your cashback and Amazon rewards.
             </p>
           </div>
 
@@ -107,13 +107,21 @@ const MerchantsPage = async ({ searchParams }: MerchantsPageProps) => {
                     Routing to {merchant.name}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Earn up to <strong className="text-foreground">{merchant.cashbackRate}</strong> on your purchase today.
+                    {merchant.name.trim().toLowerCase() === "amazon" ? (
+                      <>
+                        Earn up to <strong className="text-foreground">{merchant.cashbackRate}</strong> as Amazon gift card rewards on your purchase today.
+                      </>
+                    ) : (
+                      <>
+                        Earn up to <strong className="text-foreground">{merchant.cashbackRate}</strong> on your purchase today.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
             ) : (
               <p className="text-center text-sm text-muted-foreground">
-                Browse our partner stores and start earning cashback on every purchase.
+                Browse our partner stores and start earning cashback or Amazon rewards on every purchase.
               </p>
             )}
           </div>

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/providers";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const THEME_COOKIE_KEY = "fareback_theme";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://fareback.in"),
@@ -16,8 +19,8 @@ export const metadata: Metadata = {
     template: "%s | Fareback",
   },
   description:
-    "Fareback helps users shop via affiliate offers and request UPI withdrawals from earned cashback.",
-  keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping"],
+    "Fareback helps users shop via affiliate offers, withdraw cashback, and convert Amazon rewards into gift cards.",
+  keywords: ["cashback", "affiliate", "wallet", "UPI", "shopping", "amazon rewards"],
   authors: [{ name: "Fareback" }],
   alternates: {
     canonical: "/",
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Fareback",
     description:
-      "Affiliate cashback made simple with manual wallet and withdrawal management.",
+      "Affiliate cashback and Amazon gift-card rewards made simple with manual wallet and conversion management.",
   },
   icons: {
     icon: [
@@ -66,24 +69,34 @@ export const metadata: Metadata = {
   },
 };
 
-const RootLayout = ({
+const RootLayout = async ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) => (
-  <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-    <body className="min-h-screen bg-background font-sans antialiased">
-      <Providers>
-        <div className="relative flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-      </Providers>
-      <Analytics />
-      <SpeedInsights />
-    </body>
-  </html>
-);
+}>) => {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get(THEME_COOKIE_KEY)?.value;
+  const themeClass = themeCookie === "light" ? "" : "dark";
+
+  return (
+    <html lang="en" className={themeClass} suppressHydrationWarning data-scroll-behavior="smooth">
+      <body suppressHydrationWarning className="min-h-screen bg-background font-sans antialiased">
+        <Providers>
+          <div
+            id="booster_root"
+            suppressHydrationWarning
+            className="relative flex min-h-screen flex-col"
+          >
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </Providers>
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+};
 
 export default RootLayout;

@@ -8,7 +8,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { isConfiguredAdminEmail } from "@/lib/admin";
-import { ensureWalletForUser } from "@/lib/wallet";
+import { ensureWalletsForUser } from "@/lib/wallet";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
 const GOOGLE_OAUTH_REDIRECT_COOKIE = "google_oauth_redirect";
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         })
         .returning({ id: users.id });
 
-      await ensureWalletForUser(createdUser.id);
+      await ensureWalletsForUser(createdUser.id);
       existingUser = createdUser;
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Filter, RefreshCcw, Search, Trash2 } from "lucide-react";
 
 import {
@@ -38,7 +38,9 @@ interface AdminClickItem {
 interface WalletUserItem {
   email: string;
   name: string | null;
-  balanceInPaise: number;
+  cashbackBalanceInPaise: number;
+  amazonRewardBalanceInPaise: number;
+  updatedAt: Date;
 }
 
 interface AdminInteractiveSectionsProps {
@@ -47,7 +49,6 @@ interface AdminInteractiveSectionsProps {
   unreviewedClicksCount: number;
   trackedClicksCount: number;
   clicks: AdminClickItem[];
-  usersWithWallet: WalletUserItem[];
 }
 
 const statusColors: Record<ClickStatus, string> = {
@@ -71,47 +72,83 @@ const clickStatusLabel: Record<ClickStatus, string> = {
 const AdminInteractiveSections = ({
   unreviewedClicksCount,
   clicks,
-  usersWithWallet,
 }: AdminInteractiveSectionsProps) => {
   const [showAllUsers, setShowAllUsers] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<"latest" | "name-asc" | "name-desc" | "wallet-asc" | "wallet-desc">("wallet-desc");
+  const [usersWithWallet, setUsersWithWallet] = useState<WalletUserItem[]>([]);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
+  const [usersLoadError, setUsersLoadError] = useState<string | null>(null);
   const [collapsedUserGroups, setCollapsedUserGroups] = useState<Record<string, boolean>>({});
 
   const [showAllClicks, setShowAllClicks] = useState(false);
   const [clickFilter, setClickFilter] = useState<"all" | ClickStatus>("unreviewed");
 
-  const filteredUsers = useMemo(() => {
-    const normalizedQuery = userSearch.trim().toLowerCase();
+  useEffect(() => {
+    const normalized = userSearch.trim();
+    const effectiveLimit = showAllUsers ? 50 : 10;
+    const controller = new AbortController();
 
-    const base = normalizedQuery
-      ? usersWithWallet.filter((user) => {
-          const name = (user.name ?? "").toLowerCase();
-          const email = user.email.toLowerCase();
-          return name.includes(normalizedQuery) || email.includes(normalizedQuery);
-        })
-      : [...usersWithWallet];
+    const timer = window.setTimeout(async () => {
+      setIsUsersLoading(true);
+      setUsersLoadError(null);
 
-    if (userSort === "name-asc") {
-      return base.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
-    }
+      try {
+        const params = new URLSearchParams({
+          mode: "wallet",
+          limit: String(effectiveLimit),
+          sort: userSort,
+        });
 
-    if (userSort === "name-desc") {
-      return base.sort((a, b) => (b.name ?? "").localeCompare(a.name ?? ""));
-    }
+        if (normalized.length > 0) {
+          params.set("q", normalized);
+        }
 
-    if (userSort === "wallet-asc") {
-      return base.sort((a, b) => a.balanceInPaise - b.balanceInPaise);
-    }
+        const response = await fetch(`/api/admin/users/search?${params.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
 
-    if (userSort === "wallet-desc") {
-      return base.sort((a, b) => b.balanceInPaise - a.balanceInPaise);
-    }
+        if (!response.ok) {
+          throw new Error("Failed to load users");
+        }
 
-    return base;
-  }, [userSearch, userSort, usersWithWallet]);
+        const data = (await response.json()) as {
+          users: Array<{
+            email: string;
+            name: string | null;
+            cashbackBalanceInPaise: number;
+            amazonRewardBalanceInPaise: number;
+            updatedAt: string;
+          }>;
+          totalCount?: number;
+        };
 
-  const visibleUsers = showAllUsers ? filteredUsers : filteredUsers.slice(0, 10);
+        setUsersWithWallet(
+          (data.users ?? []).map((user) => ({
+            ...user,
+            updatedAt: new Date(user.updatedAt),
+          })),
+        );
+        setUsersTotalCount(data.totalCount ?? (data.users?.length ?? 0));
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+        setUsersLoadError("Failed to load users.");
+      } finally {
+        setIsUsersLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [showAllUsers, userSearch, userSort]);
+
+  const visibleUsers = usersWithWallet;
 
   const filteredClicks = useMemo(() => {
     if (clickFilter === "all") {
@@ -266,6 +303,14 @@ const AdminInteractiveSections = ({
                           {click.trackingStatus === "unreviewed" || click.trackingStatus === "tracked" ? (
                             <form action={adminApproveClickFormAction} className="ml-auto flex items-center gap-1">
                               <input type="hidden" name="clickId" value={click.id} />
+                              <select
+                                name="walletType"
+                                className="h-7 rounded-md border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary"
+                                defaultValue="cashback"
+                              >
+                                <option value="cashback">Cashback</option>
+                                <option value="amazon_rewards">Amazon</option>
+                              </select>
                               <div className="relative">
                                 <span className="absolute left-2 top-1.5 text-xs text-muted-foreground">INR</span>
                                 <Input
@@ -365,7 +410,15 @@ const AdminInteractiveSections = ({
 
         <CardContent className="flex-1 overflow-y-auto p-0">
           <div className="divide-y divide-border/40">
-            {visibleUsers.length === 0 ? (
+            {isUsersLoading ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">Loading users...</div>
+            ) : null}
+
+            {usersLoadError ? (
+              <div className="p-8 text-center text-sm text-destructive">{usersLoadError}</div>
+            ) : null}
+
+            {!isUsersLoading && !usersLoadError && visibleUsers.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No users found.</div>
             ) : (
               visibleUsers.map((wallet) => (
@@ -376,23 +429,28 @@ const AdminInteractiveSections = ({
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">{wallet.email}</span>
                   </div>
-                  <span
-                    className={`whitespace-nowrap text-sm font-bold ${
-                      wallet.balanceInPaise > 0 ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    {formatPaiseAsINR(wallet.balanceInPaise)}
-                  </span>
+                  <div className="text-right">
+                    <span
+                      className={`block whitespace-nowrap text-sm font-bold ${
+                        wallet.cashbackBalanceInPaise + wallet.amazonRewardBalanceInPaise > 0 ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      {formatPaiseAsINR(wallet.cashbackBalanceInPaise + wallet.amazonRewardBalanceInPaise)}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      Cashback {formatPaiseAsINR(wallet.cashbackBalanceInPaise)} • Amazon {formatPaiseAsINR(wallet.amazonRewardBalanceInPaise)}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
           </div>
         </CardContent>
 
-        {filteredUsers.length > 10 ? (
+        {usersTotalCount > visibleUsers.length ? (
           <div className="border-t border-border/40 bg-muted/10 p-3">
             <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setShowAllUsers((prev) => !prev)}>
-              {showAllUsers ? "Show Less" : `Load Remaining (${filteredUsers.length - 10})`}
+              {showAllUsers ? "Show Less" : `Load More (${usersTotalCount - visibleUsers.length})`}
             </Button>
           </div>
         ) : null}

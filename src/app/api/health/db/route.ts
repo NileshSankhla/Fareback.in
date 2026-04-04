@@ -28,14 +28,14 @@ export async function GET() {
       message.includes("password authentication failed") ||
       message.includes("authentication failed");
 
+    console.error("Database health check failed:", error);
+
     return NextResponse.json(
       {
         status: "error",
         db: "disconnected",
-        message,
-        ...(isAuthError && {
-          hint: "DATABASE_URL credentials are invalid. Update DATABASE_URL and DATABASE_URL_UNPOOLED in Vercel environment variables and redeploy.",
-        }),
+        code: isAuthError ? "db_auth_failed" : "db_unavailable",
+        message: "Database unavailable.",
       },
       { status: 500 }
     );

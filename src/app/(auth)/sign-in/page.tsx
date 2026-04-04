@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Secure Sign In | Fareback",
   description:
-    "Securely sign in or sign up using your Google account to start earning cashback.",
+    "Securely sign in or sign up using your Google account to start earning cashback and Amazon rewards.",
 };
 
 interface SignInPageProps {
@@ -38,7 +38,7 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
             Welcome to Fareback
           </h1>
           <p className="mt-2 text-base text-muted-foreground">
-            Sign in securely to track your rewards and withdraw cash.
+            Sign in securely to track your cashback, Amazon rewards, and withdrawals.
           </p>
         </div>
 

@@ -38,7 +38,7 @@ const TrackingRedirectButton = ({ merchantId, merchantName, isAmazon }: Tracking
         {isRedirecting ? (
           <>
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Locking Session & Redirecting...
+            {isAmazon ? "Locking Session & Tracking Rewards..." : "Locking Session & Redirecting..."}
           </>
         ) : (
           <>

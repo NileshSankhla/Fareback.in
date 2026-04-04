@@ -113,7 +113,7 @@ const Hero = ({ featuredMerchants }: HeroProps) => {
           </h1>
 
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-lg">
-            Start with Amazon or Flipkart below, shop like normal, and move straight into tracked cashback and UPI withdrawals.
+            Start with Amazon or Flipkart below, shop like normal, and move straight into tracked cashback, Amazon rewards, and UPI withdrawals.
           </p>
 
           <div className="w-full max-w-4xl pt-2">
@@ -129,20 +129,21 @@ const Hero = ({ featuredMerchants }: HeroProps) => {
               {featuredMerchants.map((merchant) => {
                 const tone = getMerchantTone(merchant.name);
                 const initials = merchant.name.charAt(0).toUpperCase();
+                const isAmazon = merchant.name.trim().toLowerCase() === "amazon";
 
                 return (
                   <Link
                     key={merchant.id}
                     href={merchant.href}
                     className={`group relative flex min-h-32 flex-col items-center justify-center overflow-hidden rounded-2xl border ${tone.border} ${tone.background} p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 ${tone.glow} ${tone.hoverBackground}`}
-                    aria-label={`Shop at ${merchant.name} and earn ${merchant.cashbackRate} cashback`}
+                    aria-label={`Shop at ${merchant.name} and earn ${merchant.cashbackRate} ${isAmazon ? "Amazon rewards" : "cashback"}`}
                   >
                     <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/40 bg-white shadow-sm ${tone.iconBackground}`}>
                       <span className="text-lg font-black text-foreground">{initials}</span>
                     </div>
                     <span className="text-sm font-bold text-foreground sm:text-base">{merchant.name}</span>
                     <span className={`mt-1 text-xs font-semibold ${tone.rateText} sm:text-sm`}>
-                      Upto {merchant.cashbackRate}*
+                      Upto {merchant.cashbackRate}* {isAmazon ? "Amazon rewards" : "cashback"}
                     </span>
                   </Link>
                 );
@@ -167,7 +168,7 @@ const Hero = ({ featuredMerchants }: HeroProps) => {
               No minimum withdrawal
             </span>
             <span>•</span>
-            <span>Real cashback, not coupons</span>
+            <span>Cashback for most stores, Amazon rewards as gift cards</span>
             <span>•</span>
             <span>UPI to bank</span>
           </div>

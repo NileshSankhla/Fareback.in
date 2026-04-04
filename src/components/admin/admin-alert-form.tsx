@@ -1,15 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { adminSendAlertAction } from "@/app/actions/notifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-interface AdminAlertFormProps {
-  userEmailSuggestions: string[];
-}
 
 const SubmitButton = () => {
   const { pending } = useFormStatus();
@@ -21,8 +17,47 @@ const SubmitButton = () => {
   );
 };
 
-const AdminAlertForm = ({ userEmailSuggestions }: AdminAlertFormProps) => {
+const AdminAlertForm = () => {
   const [state, formAction] = useActionState(adminSendAlertAction, {});
+  const [userEmail, setUserEmail] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const normalized = userEmail.trim();
+
+    if (normalized.length < 2) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/users/search?mode=basic&limit=8&q=${encodeURIComponent(normalized)}`,
+          { signal: controller.signal, cache: "no-store" },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as {
+          users?: Array<{ email: string }>;
+        };
+
+        setSuggestions((data.users ?? []).map((user) => user.email));
+      } catch {
+        // Ignore canceled requests and transient fetch errors.
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [userEmail]);
+
+  const visibleSuggestions = userEmail.trim().length < 2 ? [] : suggestions;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -40,10 +75,12 @@ const AdminAlertForm = ({ userEmailSuggestions }: AdminAlertFormProps) => {
           placeholder="user@example.com (for single user)"
           list="admin-alert-email-suggestions"
           autoComplete="off"
+          value={userEmail}
+          onChange={(event) => setUserEmail(event.target.value)}
           className="md:col-span-2"
         />
         <datalist id="admin-alert-email-suggestions">
-          {userEmailSuggestions.map((email) => (
+          {visibleSuggestions.map((email) => (
             <option key={email} value={email} />
           ))}
         </datalist>

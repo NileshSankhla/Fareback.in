@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const walletAdjustmentSchema = z.object({
   userEmail: z.string().email({ message: "Please enter a valid user email." }),
+  walletType: z.enum(["cashback", "amazon_rewards"]),
   type: z.enum(["credit", "debit"]),
   amount: z
     .string()
@@ -28,12 +29,30 @@ export const withdrawalRequestSchema = z.object({
     }),
 });
 
+export const amazonGiftCardRequestSchema = z.object({
+  amount: z
+    .string()
+    .trim()
+    .regex(/^\d+(\.\d{1,2})?$/, {
+      message: "Enter a valid amount with up to 2 decimal places.",
+    }),
+});
+
 export const adminWithdrawalDecisionSchema = z.object({
   requestId: z.string().trim().regex(/^\d+$/, {
     message: "Invalid request ID.",
   }),
   decision: z.enum(["approve", "reject", "mark-paid"]),
   note: z.string().trim().max(250).optional(),
+});
+
+export const adminAmazonGiftCardDecisionSchema = z.object({
+  requestId: z.string().trim().regex(/^\d+$/, {
+    message: "Invalid request ID.",
+  }),
+  decision: z.enum(["approve", "reject", "fulfill"]),
+  note: z.string().trim().max(250).optional(),
+  giftCardCode: z.string().trim().max(100).optional(),
 });
 
 export const adminTrackedClickSchema = z.object({
@@ -48,6 +67,7 @@ export const adminApproveClickSchema = z.object({
     .regex(/^\d+(\.\d{1,2})?$/, {
       message: "Enter a valid amount with up to 2 decimal places.",
     }),
+  walletType: z.enum(["cashback", "amazon_rewards"]).optional(),
 });
 
 export const adminDeleteClickSchema = z.object({

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import MarkReadOnView from "@/components/notifications/mark-read-on-view";
 
 export const metadata: Metadata = {
   title: "Notifications",
@@ -20,14 +21,6 @@ export const metadata: Metadata = {
 
 const NotificationsPage = async () => {
   const user = await requireUser();
-
-  await db
-    .update(notifications)
-    .set({
-      isRead: true,
-      readAt: new Date(),
-    })
-    .where(and(eq(notifications.userId, user.id), eq(notifications.isRead, false)));
 
   const items = await db
     .select({
@@ -43,6 +36,7 @@ const NotificationsPage = async () => {
 
   return (
     <div className="container mx-auto px-4 py-10">
+      <MarkReadOnView />
       <div className="mx-auto max-w-3xl">
         <Card>
           <CardHeader>

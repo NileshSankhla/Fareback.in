@@ -31,7 +31,7 @@
         "@types/react-dom": "^19.2.3",
         "autocannon": "^8.0.0",
         "drizzle-kit": "^0.31.10",
-        "eslint": "^9",
+        "eslint": "^9.39.4",
         "eslint-config-next": "16.2.2",
         "postcss": "^8.5.8",
         "tailwindcss": "^4.2.2",
