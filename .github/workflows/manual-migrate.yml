@@ -1,0 +1,27 @@
+name: Manual - Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which database do you want to migrate?'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  migrate-database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      
+      - name: Apply Migrations
+        run: bun run db:migrate
+        env:
+          # Injects the correct database URL based on your selection
+          DATABASE_URL: ${{ inputs.environment == 'production' && secrets.DATABASE_URL_PRODUCTION || secrets.DATABASE_URL_PREVIEW }}
