@@ -14,8 +14,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  lint:
-    name: Lint
+  lint-and-typecheck:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,11 +31,15 @@ jobs:
 
       - name: Run linter
         run: bun run lint
+        
+      # ADDED: Fails the pipeline if TypeScript detects data-shape errors
+      - name: Run typechecker 
+        run: bun run typecheck
 
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: lint
+    needs: lint-and-typecheck
     permissions:
       contents: read
     steps:
@@ -52,7 +56,7 @@ jobs:
         run: bun run test:run
 
   build:
-    name: Build
+    name: Build (Dry Run)
     runs-on: ubuntu-latest
     needs: test
     permissions:
@@ -130,15 +134,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Sync production DB schema
-        run: bun run db:push
-        env:
-          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
-
-      - name: Seed production merchants
-        run: bun run db:seed
+      # FIXED: Uses migrate instead of push to protect user data
+      - name: Apply Database Migrations
+        run: bun run db:migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+
+      # REMOVED: bun run db:seed (Do this locally instead)
 
       - name: Install Vercel CLI
         run: bun add -g vercel@latest
