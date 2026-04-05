@@ -1,0 +1,29 @@
+name: Production Environment Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy-production:
+    name: Deploy to Vercel (Production)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      
+      - name: Install Vercel CLI
+        run: bun add -g vercel@latest
+        
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: Build & Deploy to Vercel Production
+        # Deploys directly to fareback.in
+        run: vercel deploy --prod --build-env DATABASE_URL=postgresql://dummy:dummy@build.neon.tech/dummy --token=${{ secrets.VERCEL_TOKEN }}
