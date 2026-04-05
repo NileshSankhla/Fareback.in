@@ -1,0 +1,32 @@
+name: Manual - Clear Redis Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which Redis database do you want to clear?'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  clear-redis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Flush Upstash Redis Database
+        run: |
+          # Grabs the correct REST URL based on your selection
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            URL="${{ secrets.UPSTASH_REST_URL_PRODUCTION }}"
+            TOKEN="${{ secrets.UPSTASH_REST_TOKEN_PRODUCTION }}"
+          else
+            URL="${{ secrets.UPSTASH_REST_URL_PREVIEW }}"
+            TOKEN="${{ secrets.UPSTASH_REST_TOKEN_PREVIEW }}"
+          fi
+          
+          # Sends the FLUSHDB command directly to Upstash
+          curl -X POST "$URL/flushdb" \
+            -H "Authorization: Bearer $TOKEN"
