@@ -1,0 +1,47 @@
+name: Preview Environment Deploy
+
+on:
+  push:
+    branches:
+      - preview
+  pull_request:
+    branches:
+      - preview
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  strict-tests:
+    name: Lint, Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test:run
+
+  deploy-preview:
+    name: Deploy to Vercel (Preview)
+    runs-on: ubuntu-latest
+    needs: strict-tests
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      
+      - name: Install Vercel CLI
+        run: bun add -g vercel@latest
+        
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: Build & Deploy to Vercel Preview
+        id: deploy
+        # Notice we combine build and deploy into one command here
+        run: |
+          url=$(vercel deploy --build-env DATABASE_URL=postgresql://dummy:dummy@build.neon.tech/dummy --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview_url=$url" >> "$GITHUB_OUTPUT"
