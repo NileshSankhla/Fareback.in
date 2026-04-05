@@ -52,14 +52,22 @@ const Page = async () => {
   );
   const heroPriorityMerchantNames = ["amazon", "flipkart", "myntra"];
   const featuredHeroMerchantRecords: (typeof merchants.$inferSelect)[] = [];
+  const normalizedMerchantMap = new Map<string, (typeof merchants.$inferSelect)>();
+  const featuredHeroMerchantIds = new Set<number>();
+
+  for (const merchant of visibleMerchantList) {
+    const normalizedName = merchant.name.trim().toLowerCase();
+    if (!normalizedMerchantMap.has(normalizedName)) {
+      normalizedMerchantMap.set(normalizedName, merchant);
+    }
+  }
 
   for (const merchantName of heroPriorityMerchantNames) {
-    const merchant = visibleMerchantList.find(
-      (item) => item.name.trim().toLowerCase() === merchantName,
-    );
+    const merchant = normalizedMerchantMap.get(merchantName);
 
-    if (merchant && !featuredHeroMerchantRecords.some((item) => item.id === merchant.id)) {
+    if (merchant && !featuredHeroMerchantIds.has(merchant.id)) {
       featuredHeroMerchantRecords.push(merchant);
+      featuredHeroMerchantIds.add(merchant.id);
     }
   }
 
@@ -68,8 +76,9 @@ const Page = async () => {
       break;
     }
 
-    if (!featuredHeroMerchantRecords.some((item) => item.id === merchant.id)) {
+    if (!featuredHeroMerchantIds.has(merchant.id)) {
       featuredHeroMerchantRecords.push(merchant);
+      featuredHeroMerchantIds.add(merchant.id);
     }
   }
 
@@ -115,16 +124,20 @@ const Page = async () => {
 
       if (userClicks.length > 0) {
         const merchantFrequency = new Map<string, number>();
+        let mostFrequentMerchant = defaultFavoritePlatform;
+        let mostFrequentCount = 0;
+
         for (const click of userClicks) {
-          merchantFrequency.set(
-            click.merchantName,
-            (merchantFrequency.get(click.merchantName) ?? 0) + 1,
-          );
+          const nextCount = (merchantFrequency.get(click.merchantName) ?? 0) + 1;
+          merchantFrequency.set(click.merchantName, nextCount);
+
+          if (nextCount > mostFrequentCount) {
+            mostFrequentCount = nextCount;
+            mostFrequentMerchant = click.merchantName;
+          }
         }
 
-        favoritePlatform = [...merchantFrequency.entries()].sort(
-          (a, b) => b[1] - a[1],
-        )[0]?.[0] ?? defaultFavoritePlatform;
+        favoritePlatform = mostFrequentMerchant;
       }
     } catch (error) {
       console.error("Failed to fetch tracked history:", error);

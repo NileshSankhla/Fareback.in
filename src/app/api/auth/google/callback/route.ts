@@ -8,6 +8,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { isConfiguredAdminEmail } from "@/lib/admin";
+import { sendWelcomeEmail } from "@/lib/email";
 import { ensureWalletsForUser } from "@/lib/wallet";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
@@ -148,6 +149,14 @@ export async function GET(request: NextRequest) {
 
       await ensureWalletsForUser(createdUser.id);
       existingUser = createdUser;
+
+      const welcomeEmailResult = await sendWelcomeEmail(email, googleUser.name);
+      if (!welcomeEmailResult.success && !welcomeEmailResult.skipped) {
+        console.error("Failed to send welcome email for new Google signup:", {
+          email,
+          error: welcomeEmailResult.error,
+        });
+      }
     }
 
     await createSession(existingUser.id);

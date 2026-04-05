@@ -156,12 +156,20 @@ const adjustWalletBalanceWithAtomicCte = async (
 };
 
 export type WalletType = (typeof walletTypeEnum.enumValues)[number];
+export type WalletDbClient = Pick<
+  typeof db,
+  "select" | "insert" | "update" | "delete" | "execute"
+>;
 
 export const DEFAULT_WALLET_TYPE: WalletType = "cashback";
 export const AMAZON_REWARDS_WALLET_TYPE: WalletType = "amazon_rewards";
 
-export const ensureWalletForUser = async (userId: number, walletType: WalletType = DEFAULT_WALLET_TYPE) => {
-  const [wallet] = await db
+export const ensureWalletForUser = async (
+  userId: number,
+  walletType: WalletType = DEFAULT_WALLET_TYPE,
+  dbClient: WalletDbClient = db,
+) => {
+  const [wallet] = await dbClient
     .select()
     .from(wallets)
     .where(and(eq(wallets.userId, userId), eq(wallets.walletType, walletType)))
@@ -171,12 +179,12 @@ export const ensureWalletForUser = async (userId: number, walletType: WalletType
     return wallet;
   }
 
-  await db
+  await dbClient
     .insert(wallets)
     .values({ userId, walletType, balanceInPaise: 0 })
     .onConflictDoNothing({ target: [wallets.userId, wallets.walletType] });
 
-  const [ensuredWallet] = await db
+  const [ensuredWallet] = await dbClient
     .select()
     .from(wallets)
     .where(and(eq(wallets.userId, userId), eq(wallets.walletType, walletType)))
@@ -189,18 +197,91 @@ export const ensureWalletForUser = async (userId: number, walletType: WalletType
   return ensuredWallet;
 };
 
-export const ensureWalletsForUser = async (userId: number) => {
+export const ensureWalletsForUser = async (userId: number, dbClient: WalletDbClient = db) => {
   const [cashbackWallet, amazonRewardsWallet] = await Promise.all([
-    ensureWalletForUser(userId, DEFAULT_WALLET_TYPE),
-    ensureWalletForUser(userId, AMAZON_REWARDS_WALLET_TYPE),
+    ensureWalletForUser(userId, DEFAULT_WALLET_TYPE, dbClient),
+    ensureWalletForUser(userId, AMAZON_REWARDS_WALLET_TYPE, dbClient),
   ]);
 
   return { cashbackWallet, amazonRewardsWallet };
 };
 
-export const getWalletBalance = async (userId: number, walletType: WalletType = DEFAULT_WALLET_TYPE) => {
-  const wallet = await ensureWalletForUser(userId, walletType);
+export const getWalletBalance = async (
+  userId: number,
+  walletType: WalletType = DEFAULT_WALLET_TYPE,
+  dbClient: WalletDbClient = db,
+) => {
+  const wallet = await ensureWalletForUser(userId, walletType, dbClient);
   return wallet.balanceInPaise;
+};
+
+const applyWalletAdjustment = async (
+  dbClient: WalletDbClient,
+  params: {
+    userId: number;
+    adminUserId?: number;
+    walletType: WalletType;
+    type: (typeof walletTransactionTypeEnum.enumValues)[number];
+    amountInPaise: number;
+    note?: string;
+    sourceClickId?: string;
+  },
+  walletId: number,
+) => {
+  const nextBalanceSql =
+    params.type === "credit"
+      ? sql`${wallets.balanceInPaise} + ${params.amountInPaise}`
+      : sql`${wallets.balanceInPaise} - ${params.amountInPaise}`;
+
+  const balanceGuard =
+    params.type === "debit"
+      ? gte(wallets.balanceInPaise, params.amountInPaise)
+      : undefined;
+
+  const [updatedWallet] = await dbClient
+    .update(wallets)
+    .set({
+      balanceInPaise: nextBalanceSql,
+      updatedAt: new Date(),
+    })
+    .where(
+      balanceGuard
+        ? and(
+            eq(wallets.id, walletId),
+            eq(wallets.userId, params.userId),
+            eq(wallets.walletType, params.walletType),
+            balanceGuard,
+          )
+        : and(
+            eq(wallets.id, walletId),
+            eq(wallets.userId, params.userId),
+            eq(wallets.walletType, params.walletType),
+          ),
+    )
+    .returning();
+
+  if (!updatedWallet) {
+    throw new Error("Insufficient wallet balance.");
+  }
+
+  try {
+    await dbClient.insert(walletTransactions).values({
+      userId: params.userId,
+      adminUserId: params.adminUserId,
+      walletType: params.walletType,
+      type: params.type,
+      amountInPaise: params.amountInPaise,
+      note: params.note,
+      sourceClickId: params.sourceClickId,
+    });
+  } catch (error) {
+    if (params.sourceClickId && isUniqueConstraintError(error)) {
+      throw new Error("Reward already processed for this click.");
+    }
+    throw error;
+  }
+
+  return updatedWallet;
 };
 
 export const adjustWalletBalance = async (
@@ -212,7 +293,8 @@ export const adjustWalletBalance = async (
     amountInPaise: number;
     note?: string;
     sourceClickId?: string;
-  }
+  },
+  dbClient: WalletDbClient = db,
 ) => {
   const amountInPaise = clampToPaise(params.amountInPaise);
   if (amountInPaise <= 0) {
@@ -220,64 +302,21 @@ export const adjustWalletBalance = async (
   }
 
   const walletType = params.walletType ?? DEFAULT_WALLET_TYPE;
-  const wallet = await ensureWalletForUser(params.userId, walletType);
+  const wallet = await ensureWalletForUser(params.userId, walletType, dbClient);
 
-  const nextBalanceSql =
-    params.type === "credit"
-      ? sql`${wallets.balanceInPaise} + ${amountInPaise}`
-      : sql`${wallets.balanceInPaise} - ${amountInPaise}`;
+  const normalizedParams = {
+    ...params,
+    walletType,
+    amountInPaise,
+  };
 
-  const balanceGuard =
-    params.type === "debit"
-      ? gte(wallets.balanceInPaise, amountInPaise)
-      : undefined;
+  if (dbClient !== db) {
+    return applyWalletAdjustment(dbClient, normalizedParams, wallet.id);
+  }
 
   try {
     return await db.transaction(async (tx) => {
-      const [updatedWallet] = await tx
-        .update(wallets)
-        .set({
-          balanceInPaise: nextBalanceSql,
-          updatedAt: new Date(),
-        })
-        .where(
-          balanceGuard
-            ? and(
-                eq(wallets.id, wallet.id),
-                eq(wallets.userId, params.userId),
-                eq(wallets.walletType, walletType),
-                balanceGuard,
-              )
-            : and(
-                eq(wallets.id, wallet.id),
-                eq(wallets.userId, params.userId),
-                eq(wallets.walletType, walletType),
-              ),
-        )
-        .returning();
-
-      if (!updatedWallet) {
-        throw new Error("Insufficient wallet balance.");
-      }
-
-      try {
-        await tx.insert(walletTransactions).values({
-          userId: params.userId,
-          adminUserId: params.adminUserId,
-          walletType,
-          type: params.type,
-          amountInPaise,
-          note: params.note,
-          sourceClickId: params.sourceClickId,
-        });
-      } catch (error) {
-        if (params.sourceClickId && isUniqueConstraintError(error)) {
-          throw new Error("Reward already processed for this click.");
-        }
-        throw error;
-      }
-
-      return updatedWallet;
+      return applyWalletAdjustment(tx, normalizedParams, wallet.id);
     });
   } catch (error) {
     if (!isTransactionTransportError(error)) {
@@ -285,11 +324,7 @@ export const adjustWalletBalance = async (
     }
 
     return adjustWalletBalanceWithAtomicCte(
-      {
-        ...params,
-        walletType,
-        amountInPaise,
-      },
+      normalizedParams,
       wallet.id,
     );
   }

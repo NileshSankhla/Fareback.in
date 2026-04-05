@@ -5,8 +5,12 @@ import { and, asc, eq, sql } from "drizzle-orm";
 
 const REDIS_COUNTER_KEY = "affiliate:amazon:counter";
 const REDIS_LINKS_KEY = process.env.AFFILIATE_REDIS_LIST_KEY || "affiliate:amazon:links";
+const AMAZON_LOOKUP_CACHE_TTL_MS = 60_000;
+const AMAZON_LINKS_CACHE_TTL_MS = 30_000;
 
 let redisClient: Redis | null = null;
+let cachedAmazonMerchantId: { value: number | null; expiresAt: number } | null = null;
+let cachedAmazonLinks: { value: string[]; expiresAt: number } | null = null;
 
 const getRedisClient = (): Redis | null => {
   if (redisClient) {
@@ -36,16 +40,32 @@ const linkFromCounter = (
 };
 
 const getAmazonMerchantId = async (): Promise<number | null> => {
+  const now = Date.now();
+  if (cachedAmazonMerchantId && cachedAmazonMerchantId.expiresAt > now) {
+    return cachedAmazonMerchantId.value;
+  }
+
   const [amazon] = await db
     .select({ id: merchants.id })
     .from(merchants)
     .where(sql`lower(${merchants.name}) = 'amazon'`)
     .limit(1);
 
-  return amazon?.id ?? null;
+  const merchantId = amazon?.id ?? null;
+  cachedAmazonMerchantId = {
+    value: merchantId,
+    expiresAt: now + AMAZON_LOOKUP_CACHE_TTL_MS,
+  };
+
+  return merchantId;
 };
 
 const getLinksFromDatabase = async (): Promise<string[]> => {
+  const now = Date.now();
+  if (cachedAmazonLinks && cachedAmazonLinks.expiresAt > now) {
+    return cachedAmazonLinks.value;
+  }
+
   const amazonMerchantId = await getAmazonMerchantId();
   if (!amazonMerchantId) {
     return [];
@@ -62,7 +82,13 @@ const getLinksFromDatabase = async (): Promise<string[]> => {
     )
     .orderBy(asc(affiliateLinks.linkNumber));
 
-  return rows.map((row) => row.url);
+  const links = rows.map((row) => row.url);
+  cachedAmazonLinks = {
+    value: links,
+    expiresAt: now + AMAZON_LINKS_CACHE_TTL_MS,
+  };
+
+  return links;
 };
 
 const getNextCountFromDbCounter = async (): Promise<number> => {

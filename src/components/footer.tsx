@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Heart, Instagram, Mail } from "lucide-react";
+import { Heart, Mail } from "lucide-react";
 import FooterNavLink from "@/components/footer-nav-link";
 
 const Footer = () => {
@@ -49,7 +49,18 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="group flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
             >
-              <Instagram className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M7 2C4.239 2 2 4.239 2 7v10c0 2.761 2.239 5 5 5h10c2.761 0 5-2.239 5-5V7c0-2.761-2.239-5-5-5H7Zm5 5.5A4.5 4.5 0 1 0 12 16.5a4.5 4.5 0 0 0 0-9Zm0 2A2.5 2.5 0 1 1 12 14.5a2.5 2.5 0 0 1 0-5Zm5.25-2a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </a>
             <a
               href="mailto:support@fareback.in"

@@ -1,10 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 /**
  * Load test script for Fareback
- * Run: npm run load-test -- --url http://localhost:3000 --connections 100 --duration 30
+ * Run: bun run load-test -- --url http://localhost:3000 --connections 100 --duration 30
  * Example realistic browser profile:
- * npm run load-test -- --url https://fareback.in/dashboard --connections 50 --duration 20 --pipelining 1
+ * bun run load-test -- --url https://fareback.in/dashboard --connections 50 --duration 20 --pipelining 1
  */
 
 async function runLoadTest() {
@@ -123,7 +123,7 @@ Warming up...
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Load test failed:", message);
     console.log("\nMake sure to:");
-    console.log("  1. npm install");
+    console.log("  1. bun install");
     console.log("  2. Run against a reachable URL");
     process.exit(1);
   }

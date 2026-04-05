@@ -348,27 +348,29 @@ export const adminProcessAmazonGiftCardRequestAction = async (
       }
 
       try {
-        await adjustWalletBalance({
-          userId: request.userId,
-          adminUserId: admin.id,
-          walletType: AMAZON_REWARDS_WALLET_TYPE,
-          type: "debit",
-          amountInPaise: request.amountInPaise,
-          note: `Amazon gift card request #${request.id}`,
+        await db.transaction(async (tx) => {
+          await adjustWalletBalance({
+            userId: request.userId,
+            adminUserId: admin.id,
+            walletType: AMAZON_REWARDS_WALLET_TYPE,
+            type: "debit",
+            amountInPaise: request.amountInPaise,
+            note: `Amazon gift card request #${request.id}`,
+          }, tx);
+
+          await tx
+            .update(amazonGiftCardRequests)
+            .set({
+              status: "approved",
+              adminNote: validation.data.note || null,
+              processedByAdminId: admin.id,
+              processedAt: new Date(),
+            })
+            .where(eq(amazonGiftCardRequests.id, request.id));
         });
       } catch (err) {
         return { error: err instanceof Error ? err.message : "Failed to reserve Amazon rewards." };
       }
-
-      await db
-        .update(amazonGiftCardRequests)
-        .set({
-          status: "approved",
-          adminNote: validation.data.note || null,
-          processedByAdminId: admin.id,
-          processedAt: new Date(),
-        })
-        .where(eq(amazonGiftCardRequests.id, request.id));
 
       revalidatePath("/admin");
       revalidatePath("/dashboard");
@@ -389,17 +391,34 @@ export const adminProcessAmazonGiftCardRequestAction = async (
 
     if (request.status === "pending") {
       try {
-        await adjustWalletBalance({
-          userId: request.userId,
-          adminUserId: admin.id,
-          walletType: AMAZON_REWARDS_WALLET_TYPE,
-          type: "debit",
-          amountInPaise: request.amountInPaise,
-          note: `Amazon gift card request #${request.id}`,
+        await db.transaction(async (tx) => {
+          await adjustWalletBalance({
+            userId: request.userId,
+            adminUserId: admin.id,
+            walletType: AMAZON_REWARDS_WALLET_TYPE,
+            type: "debit",
+            amountInPaise: request.amountInPaise,
+            note: `Amazon gift card request #${request.id}`,
+          }, tx);
+
+          await tx
+            .update(amazonGiftCardRequests)
+            .set({
+              status: "fulfilled",
+              giftCardCode: validation.data.giftCardCode,
+              adminNote: validation.data.note || null,
+              processedByAdminId: admin.id,
+              processedAt: new Date(),
+            })
+            .where(eq(amazonGiftCardRequests.id, request.id));
         });
       } catch (err) {
         return { error: err instanceof Error ? err.message : "Failed to reserve Amazon rewards." };
       }
+
+      revalidatePath("/admin");
+      revalidatePath("/dashboard");
+      return { success: "Amazon gift card issued successfully." };
     }
 
     await db
@@ -489,23 +508,25 @@ const adminProcessWithdrawalAction = async (
 
     if (validation.data.decision === "approve") {
       try {
-        await adjustWalletBalance({
-          userId: request.userId,
-          adminUserId: admin.id,
-          type: "debit",
-          amountInPaise: request.amountInPaise,
-          note: `Withdrawal approved (#${request.id})`,
-        });
+        await db.transaction(async (tx) => {
+          await adjustWalletBalance({
+            userId: request.userId,
+            adminUserId: admin.id,
+            type: "debit",
+            amountInPaise: request.amountInPaise,
+            note: `Withdrawal approved (#${request.id})`,
+          }, tx);
 
-        await db
-          .update(withdrawalRequests)
-          .set({
-            status: "approved",
-            adminNote: validation.data.note || null,
-            processedByAdminId: admin.id,
-            processedAt: new Date(),
-          })
-          .where(eq(withdrawalRequests.id, request.id));
+          await tx
+            .update(withdrawalRequests)
+            .set({
+              status: "approved",
+              adminNote: validation.data.note || null,
+              processedByAdminId: admin.id,
+              processedAt: new Date(),
+            })
+            .where(eq(withdrawalRequests.id, request.id));
+        });
       } catch (err) {
         return { error: err instanceof Error ? err.message : "Failed to approve withdrawal." };
       }
@@ -635,11 +656,17 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
       return;
     }
 
-    const [click] = await db
-      .select()
+    const [clickWithMerchant] = await db
+      .select({
+        click: clicks,
+        merchantName: merchants.name,
+      })
       .from(clicks)
+      .leftJoin(merchants, eq(merchants.id, clicks.merchantId))
       .where(eq(clicks.id, validation.data.clickId))
       .limit(1);
+
+    const click = clickWithMerchant?.click;
 
     if (!click || click.trackingStatus === "approved" || click.trackingStatus === "deleted") {
       return;
@@ -655,37 +682,33 @@ export const adminApproveClickFormAction = async (formData: FormData) => {
       return;
     }
 
-    const [merchant] = await db
-      .select({ name: merchants.name })
-      .from(merchants)
-      .where(eq(merchants.id, click.merchantId))
-      .limit(1);
-
     const walletType = validation.data.walletType
-      ?? (merchant?.name.trim().toLowerCase() === "amazon"
+      ?? (clickWithMerchant?.merchantName?.trim().toLowerCase() === "amazon"
         ? AMAZON_REWARDS_WALLET_TYPE
         : DEFAULT_WALLET_TYPE);
 
     try {
-      await adjustWalletBalance({
-        userId: click.userId,
-        adminUserId: admin.id,
-        walletType,
-        type: "credit",
-        amountInPaise,
-        note: `Approved ${walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
-        sourceClickId: click.id,
-      });
+      await db.transaction(async (tx) => {
+        await adjustWalletBalance({
+          userId: click.userId,
+          adminUserId: admin.id,
+          walletType,
+          type: "credit",
+          amountInPaise,
+          note: `Approved ${walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
+          sourceClickId: click.id,
+        }, tx);
 
-      await db
-        .update(clicks)
-        .set({
-          trackingStatus: "approved",
-          rewardAmountInPaise: amountInPaise,
-          reviewedByAdminId: admin.id,
-          reviewedAt: new Date(),
-        })
-        .where(eq(clicks.id, click.id));
+        await tx
+          .update(clicks)
+          .set({
+            trackingStatus: "approved",
+            rewardAmountInPaise: amountInPaise,
+            reviewedByAdminId: admin.id,
+            reviewedAt: new Date(),
+          })
+          .where(eq(clicks.id, click.id));
+      });
     } catch (err) {
       if (err instanceof Error && err.message === "Reward already processed for this click.") {
         return;
@@ -743,27 +766,29 @@ export const adminUndoApprovedClickFormAction = async (formData: FormData) => {
     }
 
     try {
-      await adjustWalletBalance({
-        userId: click.userId,
-        adminUserId: admin.id,
-        walletType: rewardTransaction.walletType,
-        type: "debit",
-        amountInPaise: rewardTransaction.amountInPaise,
-        note: `Undo approved ${rewardTransaction.walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
-        sourceClickId: undefined,
+      await db.transaction(async (tx) => {
+        await adjustWalletBalance({
+          userId: click.userId,
+          adminUserId: admin.id,
+          walletType: rewardTransaction.walletType,
+          type: "debit",
+          amountInPaise: rewardTransaction.amountInPaise,
+          note: `Undo approved ${rewardTransaction.walletType === AMAZON_REWARDS_WALLET_TYPE ? "Amazon reward" : "cashback"} for click ${click.id}`,
+          sourceClickId: undefined,
+        }, tx);
+
+        await tx.delete(walletTransactions).where(eq(walletTransactions.id, rewardTransaction.id));
+
+        await tx
+          .update(clicks)
+          .set({
+            trackingStatus: "tracked",
+            rewardAmountInPaise: 0,
+            reviewedByAdminId: admin.id,
+            reviewedAt: new Date(),
+          })
+          .where(eq(clicks.id, click.id));
       });
-
-      await db.delete(walletTransactions).where(eq(walletTransactions.id, rewardTransaction.id));
-
-      await db
-        .update(clicks)
-        .set({
-          trackingStatus: "tracked",
-          rewardAmountInPaise: 0,
-          reviewedByAdminId: admin.id,
-          reviewedAt: new Date(),
-        })
-        .where(eq(clicks.id, click.id));
     } catch (err) {
       console.error("Transaction error in undo approve click:", err);
       return;

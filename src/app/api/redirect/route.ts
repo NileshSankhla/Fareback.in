@@ -22,6 +22,12 @@ const IDEMPOTENCY_LOCK_TTL_SECONDS = 3;
 const IDEMPOTENCY_WAIT_MS = 40;
 // Give the Redis key a 24-hour max lifespan; the date string naturally invalidates it at midnight anyway.
 const RECENT_CLICK_TTL_SECONDS = 24 * 60 * 60;
+const IST_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Kolkata",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
 
 let redisClient: Redis | null = null;
 
@@ -54,8 +60,7 @@ const appendSubidParam = (urlString: string, subid: string): string => {
 
 // --- Timezone Helpers for IST Midnight Reset ---
 const getISTDateString = (date: Date): string => {
-  const options = { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" } as const;
-  const parts = new Intl.DateTimeFormat("en-US", options).formatToParts(date);
+  const parts = IST_DATE_FORMATTER.formatToParts(date);
   const year = parts.find((p) => p.type === "year")?.value;
   const month = parts.find((p) => p.type === "month")?.value;
   const day = parts.find((p) => p.type === "day")?.value;
