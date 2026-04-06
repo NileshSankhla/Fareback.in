@@ -18,7 +18,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://fareback.in"),
   other: {
-    "verify-admitad": "081ea0ef0d",
+    "verify-admitad": "0900cdc72f",
   },
   title: {
     default: "Fareback",
