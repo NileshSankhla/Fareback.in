@@ -24,6 +24,7 @@ import HeroCarousel from "@/components/hero-carousel";
 import HowItWorksButton from "@/components/how-it-works-button";
 import TrackedHistory, { type TrackedHistoryItem } from "@/components/tracked-history";
 import ShopNowButton from "@/components/shop-now-button";
+import PromotionalBanner from "@/components/home/promotional-banner";
 import {
   COMING_SOON_MERCHANT_NAMES,
   getAllMerchants,
@@ -243,7 +244,11 @@ const Page = async () => {
         </div>
       </section>
 
-      <section id="offers" className="relative border-y border-border/40 bg-muted/10 py-24">
+      <section className="relative z-20 -mt-12 sm:-mt-16 bg-transparent">
+        <PromotionalBanner />
+      </section>
+
+      <section id="offers" className="relative border-y border-border/40 bg-muted/10 py-24 pt-32 sm:pt-40">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-16 max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-5xl">

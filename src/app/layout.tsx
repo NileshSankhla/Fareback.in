@@ -7,6 +7,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1, // This prevents annoying input zoom on mobile devices
+  userScalable: false, // Additional protection against pinch-to-zoom
 };
 import "./globals.css";
 import Providers from "@/components/providers";

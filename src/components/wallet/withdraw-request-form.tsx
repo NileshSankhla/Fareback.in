@@ -58,7 +58,7 @@ const WithdrawRequestForm = ({ hasPendingRequest, walletType = "cashback" }: Wit
         {isAmazonRewards ? (
           <Input
             id={destinationFieldId}
-            value="Amazon gift card will be issued to your registered email"
+            value="Your Fareback mail"
             readOnly
             disabled
             className="h-12 text-base focus-visible:ring-primary/50"
