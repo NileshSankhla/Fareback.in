@@ -426,7 +426,7 @@ purpose of this Privacy Policy is:
   -Name: Lakshya Khatri
 -Designation: Grievance Officer
 -Company: FareBack 
--Email: support@fareback.in
+-Email: support@fareback.in / lkkhatri0704@gmail.com
 
 
 The Grievance Officer shall address your concerns within
@@ -439,7 +439,7 @@ The Grievance Officer shall address your concerns within
 For any questions, concerns, or requests regarding this
 Privacy Policy, please contact us:
 -FareBack
--Email: admin@fareback.in
+-Email: admin@fareback.in / lkkhatri0704@gmail.com
 -Website: https://www.fareback.in
 
 ---
